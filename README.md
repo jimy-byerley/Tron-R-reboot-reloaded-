@@ -1,5 +1,4 @@
-# Tron-R{reboot
-#         reloaded}
+# Tron-R{reboot||reloaded}
 main repository of the Tron-R{reboot||reloaded} game project
 
 ==[ THE PROJECT ]==
@@ -11,19 +10,18 @@ made after the film.
 
 
 ==[ PLAY ]==
-============
 
 to launch the game it is necessary to install Blender (www.blender.org) (version >= 2.70 as known, see compatibility)
 blender is an opensource software and can support many platforms (linux, windows, maxOS)
 
 to start the game :
-  open "boot.blend" with blender and press 'P' in the 3D view.
-special to linux :
+  extract the zip file
+  open "boot.blend" from the tron-reboot directory with blender and press 'P' in the 3D view.
+Or special to linux :
   $ blenderplayer boot.blend
 
 
 ==[ COMPATIBILITY ]==
-=====================
 
-OS platform: Linux (tested), but mabe windows and maxOS too.
+OS platform: Linux (tested), but mabe windows and maxOS should work too.
 Blender :  version >= 2.70  (made with blender 2.73)
