@@ -1,0 +1,2 @@
+Le présent répertoire contient les composants du "système" qui sont faits pour s'agencer entre eux, chaque 
+composant important est placé préférenciellement dans un répertoire sépare, et a sa propre arboressence.

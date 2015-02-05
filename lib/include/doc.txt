@@ -1,0 +1,2 @@
+Directory containing some scripts or mesh to copy into other diretory, this directory has no utility in game, like
+the /usr/lib/include in Unix.

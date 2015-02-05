@@ -1,0 +1,44 @@
+uniform sampler2D bgl_RenderedTexture;
+
+vec4 sample( in vec2 coord ) 
+{
+	//return texture2D(bgl_RenderedTexture, coord )*texture2D(bgl_RenderedTexture, coord )/5; 	
+	return texture2D(bgl_RenderedTexture, coord ); 	
+}
+
+
+vec4 max( in vec4 a, in vec4 b)
+{
+	vec4 r = vec4(0);
+	r.x = (a.x>b.x)?a.x:b.x;
+	r.y = (a.y>b.y)?a.y:b.y;
+	r.z = (a.z>b.z)?a.z:b.z;
+	return r;
+}
+
+void main(void)
+{
+
+	vec4 bloom = vec4(0);
+		
+	int j;
+	int i;
+
+	for(i=-2; i<3; i++)
+	{
+        for (j=-2; j<3; j++)
+        {
+            bloom += sample (gl_TexCoord[0].st + vec2(j, i)*0.0025);
+        }
+    }
+    bloom *= 1/float(5*5);
+
+	vec4 value =  texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
+    gl_FragColor = max(value,bloom);
+    /*
+    if (bloom.x > value.x)
+    	gl_FragColor = bloom;
+    else
+    	gl_FragColor = value;
+    */
+}
