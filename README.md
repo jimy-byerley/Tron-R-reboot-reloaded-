@@ -2,7 +2,6 @@
 main repository of the Tron-R{reboot||reloaded} game project
 
 ==[ THE PROJECT ]==
-===================
 
 This is the main part of the Tron-R{reboot||reloaded} project which attempt to be a new open-source game 
 based on Tron. This game is based on Tron Legacy and Stand for replace the proprietary Tron evolution game 
