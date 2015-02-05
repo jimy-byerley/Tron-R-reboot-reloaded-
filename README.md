@@ -2,6 +2,7 @@
 main repository of the Tron-R{reboot||reloaded} game project
 
 ==[ THE PROJECT ]==
+===================
 
 This is the main part of the Tron-R{reboot||reloaded} project which attempt to be a new open-source game 
 based on Tron. This game is based on Tron Legacy and Stand for replace the proprietary Tron evolution game 
@@ -9,6 +10,7 @@ made after the film.
 
 
 ==[ PLAY ]==
+============
 
 to launch the game it is necessary to install Blender (www.blender.org) (version >= 2.70 as known, see compatibility)
 blender is an opensource software and can support many platforms (linux, windows, maxOS)
@@ -20,6 +22,7 @@ special to linux :
 
 
 ==[ COMPATIBILITY ]==
+=====================
 
 OS platform: Linux (tested), but mabe windows and maxOS too.
 Blender :  version >= 2.70  (made with blender 2.73)
