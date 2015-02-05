@@ -19,7 +19,7 @@ special to linux :
   $ blenderplayer boot.blend
 
 
-==[compatibility]==
+==[ COMPATIBILITY ]==
 
 OS platform: Linux (tested), but mabe windows and maxOS too.
 Blender :  version >= 2.70  (made with blender 2.73)
