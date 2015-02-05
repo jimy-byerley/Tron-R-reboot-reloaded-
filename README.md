@@ -1,4 +1,5 @@
-# Tron-R-reboot-reloaded-
+# Tron-R{reboot
+#         reloaded}
 main repository of the Tron-R{reboot||reloaded} game project
 
 ==[ THE PROJECT ]==
