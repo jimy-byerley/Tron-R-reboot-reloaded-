@@ -41,7 +41,7 @@ def spawn_cloud() :
 		if abs(pos.x - owner.worldPosition.x) > scale.x/2 : 	pos.x = owner.worldPosition.x + (random.random()-0.5)*scale.x
 		if abs(pos.y - owner.worldPosition.y) > scale.y/2 : 	pos.y = owner.worldPosition.y + (random.random()-0.5)*scale.y
 		if abs(pos.z - owner.worldPosition.z) > scale.z/2 : 	pos.z = owner.worldPosition.z + (random.random()-0.5)*scale.z
-		print("create cloud face at", pos)
+		#print("create cloud face at", pos)
 		new.worldPosition = pos
 		
 		new.localScale.x = facescale
