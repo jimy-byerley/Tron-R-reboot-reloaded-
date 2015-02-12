@@ -1,3 +1,0 @@
-Contient les composants redondants dans le "sysèmes" ou ailleurs : les disques, les grenades, les motos, ... en
-fait tout ce qui n'est pas rattaché à un batiment ou a un composant particulier.
-

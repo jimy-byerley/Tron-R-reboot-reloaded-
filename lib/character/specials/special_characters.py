@@ -27,7 +27,8 @@ animations = {
 	'clu' : { # animations pour CLU
 		"click" : ('clu item', 285, 289, 290, 292),
 		# disk actions
-		"launch disk" : ('clu item', 90, 103, 104, 120),
+		#"launch disk" : ('clu item', 90, 103, 104, 120),
+		"launch disk" : ('clu move', 120, 130, 131, 140),
 		"catch disk" : ('clu item', 257, 257, 270, 270),
 		"take disk" : ('clu item', 60, 64, 66, 74),
 		# light-baton and cycle actions
