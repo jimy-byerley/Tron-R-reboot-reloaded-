@@ -130,6 +130,7 @@ class Avatar(character.Character) :
 first_player = None
 
 
+
 def init() :
 	cont = bge.logic.getCurrentController();
 	owner = cont.owner;
@@ -143,6 +144,9 @@ def init() :
 	first_player.setCameraActive("tps");
 	first_player.setCameraActive("fps");
 	owner.setParent(first_player.box)
+	thread = threading.Thread()
+	thread.run = mouse_thread
+	thread.start()
 
 
 def setup_overlay() :

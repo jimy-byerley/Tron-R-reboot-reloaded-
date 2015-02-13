@@ -1,15 +1,11 @@
 uniform sampler2D bgl_RenderedTexture;
 
-uniform float retinex_size;
-
 
 #define MIN(a,b) (a>b)?b:a
 #define MAX(a,b) (a>b)?a:b
 vec3 contrast( in vec3 value )
 {
 	static float fac = 0.8;
-	//float med = (value.x+value.y+value.z)/3;
-	//vec4 result = (value - vec3(med)*0.8)*3;
 	
 	static float max = MAX(MAX(value.x, value.y), value.z);
 	value.x -= (max-value.x)*fac;
@@ -23,39 +19,36 @@ vec3 contrast( in vec3 value )
 vec3 max( in vec3 a, in vec3 b)
 {
 	static vec3 r = vec3(0);
-	r.x = (a.x>b.x)?a.x:b.x;
-	r.y = (a.y>b.y)?a.y:b.y;
-	r.z = (a.z>b.z)?a.z:b.z;
+	r.x = MAX(a.x, b.x);
+	r.y = MAX(a.y, b.y);
+	r.z = MAX(a.z, b.z);
 	return r;
 }
 
-#define BRUSH_LEN 75
+#define BRUSH_LEN 27
 const vec2 brush [BRUSH_LEN] = {
-	vec2( 0,-5), vec2( 0,-4), vec2( 0,-3), vec2( 0,-2), vec2( 0,-1), vec2( 0,0), vec2( 0,1), vec2( 0,2), vec2( 0,3), vec2( 0,4), vec2( 0,5), 
-	vec2( 1,-4), vec2( 1,-3), vec2( 1,-2), vec2( 1,-1), vec2( 1,0), vec2( 1,1), vec2( 1,2), vec2( 1,3), vec2( 1,4), 
-	vec2( 2,-4), vec2( 2,-3), vec2( 2,-2), vec2( 2,-1), vec2( 2,0), vec2( 2,1), vec2( 2,2), vec2( 2,3), vec2( 2,4), 
-	vec2( 3,-4), vec2( 3,-3), vec2( 3,-2), vec2( 3,-1), vec2( 3,0), vec2( 3,1), vec2( 3,2), vec2( 3,3), vec2( 3,4), 
-	vec2( 4,-2), vec2( 4,-1), vec2( 4,0), vec2( 4,1), vec2( 4,2), 
-	vec2(-4,-2), vec2(-4,-1), vec2(-4,0), vec2(-4,1), vec2(-4,2), 
-	vec2(-3,-4), vec2(-3,-3), vec2(-3,-2), vec2(-3,-1), vec2(-3,0), vec2(-3,1), vec2(-3,2), vec2(-3,3), vec2(-3,4), 
-	vec2(-2,-4), vec2(-2,-3), vec2(-2,-2), vec2(-2,-1), vec2(-2,0), vec2(-2,1), vec2(-2,2), vec2(-2,3), vec2(-2,4), 
-	vec2(-1,-4), vec2(-1,-3), vec2(-1,-2), vec2(-1,-1), vec2(-1,0), vec2(-1,1), vec2(-1,2), vec2(-1,3), vec2(-1,4), 
+vec2( 0,-3), vec2( 0,-2), vec2( 0,-1), vec2( 0,0), vec2( 0,1), vec2( 0,2), vec2( 0,3), 
+vec2( 1,-2), vec2( 1,-1), vec2( 1,0), vec2( 1,1), vec2( 1,2), 
+vec2( 2,-2), vec2( 2,-1), vec2( 2,0), vec2( 2,1), vec2( 2,2), 
+vec2(-2,-2), vec2(-2,-1), vec2(-2,0), vec2(-2,1), vec2(-2,2), 
+vec2(-1,-2), vec2(-1,-1), vec2(-1,0), vec2(-1,1), vec2(-1,2), 
 };
+
+const float brush_fac = 1/float(BRUSH_LEN);
 
 
 void main(void)
 {
 
 	static vec3 bloom = vec3(0);
-		
-	int j;
+	
 	int i;
 
 	for(i=0; i<BRUSH_LEN; i++)
 	{
 		bloom += texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + brush[i]*0.0016);
 	}
-	bloom *= 1/float(BRUSH_LEN);
+	bloom *= brush_fac;
 	static vec3 value =  texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
 	
 	value = max(value,contrast(bloom));
@@ -64,7 +57,7 @@ void main(void)
 }
 
 /*
-size = 5
+size = 3
 from math import *
 
 t = '{\n'

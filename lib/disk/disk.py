@@ -190,7 +190,6 @@ class IDDisc(Item):
 		self.setActive(False)
 
 	def setActive(self, active=True):
-		self.active = active
 		self.object['active'] = active
 		self.object['lame']['active'] = active
 		character = self.getOwner()
@@ -209,9 +208,8 @@ class IDDisc(Item):
 					take = character.skin.animations['biking take disk']
 					character.skin.armature.playAction(loop[0], loop[4], loop[4], layer=0, play_mode=KX_ACTION_MODE_LOOP) # from light_baton.py
 					character.skin.armature.playAction(take[0], take[3], take[4], layer=2, layer_weight=0)
-			
 		else :
-			self.object['just deactivated'] = True
+			if self.active: self.object['just deactivated'] = True
 			self.object.linVelocityMin = 0
 			self.object.linVelocityMax = 0
 			self.object['lame'].visible = False
@@ -223,6 +221,8 @@ class IDDisc(Item):
 					take = character.skin.animations['biking take disk']
 					character.skin.armature.playAction(loop[0], loop[2], loop[3], layer=0, play_mode=KX_ACTION_MODE_LOOP)
 					character.skin.armature.playAction(take[0], take[1], take[2], layer=2, layer_weight=0)
+					
+		self.active = active
 
 	
 	

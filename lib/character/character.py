@@ -311,8 +311,8 @@ class Skin(object) :
 			raise(TypeError("item type must be int or KX_GameObject."))
 			return
 		# détachement
-		self.items[item].removeParent()
-		self.items[item] = None
+		self.items[index].removeParent()
+		self.items[index] = None
 
 	def toggleItem(self, item, wielded=True, wait=False):
 		"""
