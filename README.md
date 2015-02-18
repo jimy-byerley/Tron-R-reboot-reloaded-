@@ -16,6 +16,7 @@ made after the film.
 - better
 ![cycle](screenshots/cycle_on_grid.png) ![flynn](screenshots/flynn_in_street.png)
 
+suggestions: jimy.byerley@gmail.com
 
 
 #### PLAY
@@ -34,3 +35,5 @@ Or special to linux :
 
 OS platform: Linux (tested), but mabe windows and maxOS should work too.
 Blender :  version >= 2.70  (made with blender 2.73)
+
+bugs: jimy.byerley@gmail.com
