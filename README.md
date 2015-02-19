@@ -7,11 +7,16 @@ This is the main part of the Tron-R{reboot||reloaded} project which attempt to b
 based on Tron. This game is based on Tron Legacy and Stand for replace the proprietary Tron evolution game 
 made after the film.
 
-- several skins (screenshots/skin-monitor.png) (screenshots/skin-clu.png)
-- open-world (screenshots/street.png) (screenshots/city.png)
-- items (screenshots/disk.png) (screenshots/items.png)
-- better (screenshots/cycle_on_grid.png) (screenshots/flynn_in_street.png)
+- several skins
+![skin monitor](screenshots/skin-monitor.png) ![skin clu](screenshots/skin-clu.png)
+- open-world 
+![street](screenshots/street.png) ![city](screenshots/city.png)
+- items
+![disk](screenshots/disk.png) ![items](screenshots/items.png)
+- better
+![cycle](screenshots/cycle_on_grid.png) ![flynn](screenshots/flynn_in_street.png)
 
+suggestions: jimy.byerley@gmail.com
 
 
 #### PLAY
@@ -30,3 +35,5 @@ Or special to linux :
 
 OS platform: Linux (tested), but mabe windows and maxOS should work too.
 Blender :  version >= 2.70  (made with blender 2.73)
+
+bugs: jimy.byerley@gmail.com
