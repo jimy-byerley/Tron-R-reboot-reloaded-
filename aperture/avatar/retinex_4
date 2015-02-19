@@ -34,21 +34,23 @@ vec2(-2,-2), vec2(-2,-1), vec2(-2,0), vec2(-2,1), vec2(-2,2),
 vec2(-1,-2), vec2(-1,-1), vec2(-1,0), vec2(-1,1), vec2(-1,2), 
 };
 
-const float brush_fac = 1/float(BRUSH_LEN);
-
 
 void main(void)
 {
 
-	static vec3 bloom = vec3(0);
+	vec3 bloom = vec3(0);
+	vec3 pix = vec3(0);
 	
 	int i;
 
 	for(i=0; i<BRUSH_LEN; i++)
 	{
-		bloom += texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + brush[i]*0.0016);
+		pix= texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + brush[i]*0.0020); // 0.0016
+		if (pix.x > 0.5) bloom.x += pix.x;
+		if (pix.y > 0.5) bloom.y += pix.y;
+		if (pix.z > 0.5) bloom.z += pix.z;
 	}
-	bloom *= brush_fac;
+	bloom *= 1/float(BRUSH_LEN);
 	static vec3 value =  texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
 	
 	value = max(value,contrast(bloom));

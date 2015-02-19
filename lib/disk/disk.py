@@ -204,9 +204,9 @@ class IDDisc(Item):
 			if character.vehicle and character.vehicle.name == "light-cycle":
 				keys = character.skin.animations.keys()
 				if "biking with disk" in keys and "biking take disk" in keys :
-					loop = character.skin.animations['set cycle']
+					loop = character.skin.animations['biking with disk']
 					take = character.skin.animations['biking take disk']
-					character.skin.armature.playAction(loop[0], loop[4], loop[4], layer=0, play_mode=KX_ACTION_MODE_LOOP) # from light_baton.py
+					character.skin.armature.playAction(loop[0], loop[2], loop[3], layer=0, play_mode=KX_ACTION_MODE_LOOP) # from light_baton.py
 					character.skin.armature.playAction(take[0], take[3], take[4], layer=2, layer_weight=0)
 		else :
 			if self.active: self.object['just deactivated'] = True
@@ -219,8 +219,8 @@ class IDDisc(Item):
 				if "biking with disk" in keys and "biking take disk" in keys :
 					loop = character.skin.animations['biking with disk']
 					take = character.skin.animations['biking take disk']
-					character.skin.armature.playAction(loop[0], loop[2], loop[3], layer=0, play_mode=KX_ACTION_MODE_LOOP)
-					character.skin.armature.playAction(take[0], take[1], take[2], layer=2, layer_weight=0)
+					character.skin.armature.playAction(loop[0], loop[4], loop[4], layer=0, play_mode=KX_ACTION_MODE_LOOP)
+					character.skin.armature.playAction(take[0], take[3], take[4], layer=2, layer_weight=0)
 					
 		self.active = active
 

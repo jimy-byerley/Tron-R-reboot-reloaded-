@@ -3,7 +3,7 @@ uniform sampler2D bgl_RenderedTexture;
 
 #define MIN(a,b) (a>b)?b:a
 #define MAX(a,b) (a>b)?a:b
-vec3 contrast( in vec3 value )
+vec4 contrast( in vec4 value )
 {
 	static float fac = 0.8;
 	
@@ -15,41 +15,21 @@ vec3 contrast( in vec3 value )
 	return value;
 }
 
-
-vec3 max( in vec3 a, in vec3 b)
-{
-	static vec3 r = vec3(0);
-	r.x = MAX(a.x, b.x);
-	r.y = MAX(a.y, b.y);
-	r.z = MAX(a.z, b.z);
-	return r;
-}
-
-#define BRUSH_LEN 27
-const vec2 brush [BRUSH_LEN] = {
-vec2( 0,-3), vec2( 0,-2), vec2( 0,-1), vec2( 0,0), vec2( 0,1), vec2( 0,2), vec2( 0,3), 
-vec2( 1,-2), vec2( 1,-1), vec2( 1,0), vec2( 1,1), vec2( 1,2), 
-vec2( 2,-2), vec2( 2,-1), vec2( 2,0), vec2( 2,1), vec2( 2,2), 
-vec2(-2,-2), vec2(-2,-1), vec2(-2,0), vec2(-2,1), vec2(-2,2), 
-vec2(-1,-2), vec2(-1,-1), vec2(-1,0), vec2(-1,1), vec2(-1,2), 
-};
-
-
 void main(void)
 {
-	int i;
-
-    bool bloom = 0
-    static vec3 color;
-	for(i=0; i<BRUSH_LEN; i++)
-	{
-		color = texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + brush[i]*0.0016);
-        if (color.x == 1 || color.y == 1 || color.z == 1)
-            break;
-	}
-	static vec3 value =  texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
-	
-	value = max(value, (color+value)/2);
-	gl_FragColor = vec4(value.x, value.y, value.z, 1);
-	
+    // RGB difraction
+    vec2 pos = gl_TexCoord[0].st;
+    vec2 pixpos = vec2(0);
+    vec4 pix = vec4(0);
+    int i=15;
+    for (i; i<30; i++)
+    {
+        pixpos = vec2(round(pos.x*i)/i, round(pos.y*i)/i);
+        pix += texture2D(bgl_RenderedTexture, pixpos);
+        pix += texture2D(bgl_RenderedTexture, pixpos+vec2(1/i));
+    }
+    pix *= 0.05;
+    // add to original pixel
+    vec4 value = texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
+	gl_FragColor = min(vec4(1), value + pow(contrast(pix), 3));
 }
