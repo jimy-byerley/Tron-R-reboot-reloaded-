@@ -96,4 +96,4 @@ for mat in mesh.materials:
 		shader.setSampler('reflection',0)
 		#shader.setSampler('refraction',1)
 		#shader.setSampler('normals',2)
-		shader.setSampler('diffuse',3)
+		shader.setSampler('diffuse',1)

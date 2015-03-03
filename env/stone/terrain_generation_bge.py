@@ -183,13 +183,13 @@ class Terrain(object):
 					if c_matrix[x][y][z].exists == True :
 						name = random.choice(all_blocs)
 						location = Vector((
-							x*basic_interval+xmin+random.randrange(-8,8),
-							y*basic_interval+ymin+random.randrange(-8,8),
-							z*basic_interval+zmin+random.randrange(-8,8)
+							x*basic_interval+xmin+random.randrange(-4,4),
+							y*basic_interval+ymin+random.randrange(-4,4),
+							z*basic_interval+zmin+random.randrange(-4,4)
 							))
 						rotation = Euler((0,0, c_matrix[x][y][z].dir))
-						r = random.random()
-						scale = Vector((2.5+r,2.5+r,2.5+r))
+						r = random.random()*0.5
+						scale = Vector((0.5+r,0.5+r,0.5+r))
 
 						# ajouter le bloc
 						bloc = scene.addObject(name, ref)
