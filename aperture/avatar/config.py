@@ -21,6 +21,8 @@ class keys:
 	item1 = ONEKEY
 	item2 = TWOKEY
 	item3 = THREEKEY
+	
+	toggle_helmet = HKEY
 
 class mouse:
 	sensibility = 0.002

@@ -68,6 +68,8 @@ class Skin(object) :
 	Elle implémente les fonctions d'un personnage spécial, tous les personnages doivent etre contenus dans le
 	fichier blender ou cette classe est utilisée.
 	"""
+	body_hair = body_head = body_helmet = None
+	helmet_active = False
 
 	animations = { # animations pour CLU
 		# disk actions
@@ -124,7 +126,10 @@ class Skin(object) :
 				self.body_head = child
 			elif "body hair" in child:
 				self.body_hair = child
+			elif "body helmet" in child:
+				self.body_helmet = child
 		self.updateRest()
+		self.toggleHelmet(False)
 		return self.armature
 
 
@@ -475,6 +480,19 @@ class Skin(object) :
 		#self._ch_color(color, self.body_hair)
 		for item in self.items:
 			item['class'].changeHolderColor(color)
+	
+	def toggleHelmet(self, helmet=None):
+		if self.body_head and self.body_hair and self.body_helmet:
+			if helmet == None: helmet = (not self.helmet_active)
+			if helmet:
+				self.body_head.visible = False
+				self.body_hair.visible = False
+				self.body_helmet.visible = True
+			else:
+				self.body_head.visible = True
+				self.body_hair.visible = True
+				self.body_helmet.visible = False
+			self.helmet_active = helmet
 
 
 
@@ -488,6 +506,8 @@ class Character(object) :
 
 	vehicle = None
 	uptime = 0
+	
+	body_head = body_hair = body_helmet = None
 
 	
 	def __init__(self, name, skin_name="clu") :
@@ -532,6 +552,8 @@ class Character(object) :
 				self.body_head = child
 			if "body hair" in child :
 				self.body_hair = child
+			if "body helmet" in child:
+				self.body_helmet = child
 		self.box["class"] = self
 		return self.box;
 
@@ -614,20 +636,20 @@ class Character(object) :
 		
 		if camera == "back" :
 			scene.active_camera = self.camera_back
-			if self.body_head :
-				#self.body_head.visible = True
-				self.body_head.setVisible(True)
-			if self.body_hair :
-				self.body_hair.setVisible(True)
-				#self.body_hair.visible = True
+			if self.skin.helmet_active and self.body_helmet:
+				self.body_helmet.visible = True
+				if self.body_head : self.body_head.visible = False
+				if self.body_hair : self.body_hair.visible = False
+			else:
+				if self.body_head : self.body_head.visible = True
+				if self.body_hair : self.body_hair.visible = True
 		
 		elif camera == "fps" :
 			print('fps')
 			scene.active_camera = self.camera_fps
-			if self.body_head :
-				self.body_head.visible = False
-			if self.body_hair :
-				self.body_hair.visible = False
+			if self.body_head :   self.body_head.visible = False
+			if self.body_hair :   self.body_hair.visible = False
+			if self.body_helmet : self.body_helmet.visible = False
 
 	
 	def availableItem(self) :
@@ -670,6 +692,10 @@ class Character(object) :
 
 	def actionItem(self, action):
 		self.skin.actionItem(action)
+	
+	
+	def toggleHelmet(self, helmet=None):
+		self.skin.toggleHelmet(helmet)
 
 
 	orient = mathutils.Euler((0,0,0))

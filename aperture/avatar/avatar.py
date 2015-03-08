@@ -226,7 +226,10 @@ def keyboard_input() :
 		first_player.wieldItem(1)
 	if _touch(sens, config.keys.item3):
 		first_player.wieldItem(2)
-
+	
+	# show/hide helmet
+	if _touch(sens, config.keys.toggle_helmet):
+		first_player.toggleHelmet()
 
 	
 	## motion control ##

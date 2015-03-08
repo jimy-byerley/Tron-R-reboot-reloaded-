@@ -34,7 +34,7 @@ uniform sampler2D reflection,refraction, normals, diffuse;
 
 float aberration = 0.005;
 float bump = 0.2;
-float texscale = 200.0;
+float texscale = 20.0;
 
 vec3 TangentSpace(vec3 v)
 {
@@ -52,14 +52,12 @@ void main() {
     coord = clamp(coord,0.005,0.995);
 
     vec3 normal = 0; texture2D(normals, gl_TexCoord[0].st*texscale).rgb*2.0-1.0;
-    normal.x = -normal.x;
-    normal.y = -normal.y;
 
     vec3 nVec = TangentSpace(vec3(normal*bump));
     vec3 vVec = normalize(gl_TexCoord[2].xyz);
 
     float cosine = abs(dot(-vVec,nVec));
-    float fresnel = 0.9+pow(1.0-cosine+0.2,2.0); // 0.98
+    float fresnel = 0.9+0.1*pow(1-cosine+0.2, 2);
 
 	vec4 glow = vec4(0);
 	for (i=-3; i<3; i++)
@@ -72,15 +70,10 @@ void main() {
     vec3 reflect = glow.rgb;
 
     vec3 luminosity = vec3(0.30, 0.59, 0.11);
-	float reflectivity = pow(dot(luminosity, reflect.rgb),5.0);
+	float reflectivity = pow(dot(luminosity, reflect.rgb), 5.0);
 
-    //vec3 refract = vec3(0.0);
-    //refract.r = texture2D(refraction, (coord+nVec.st)*1.0).r;
-    //refract.g = texture2D(refraction, (coord+nVec.st)*1.0-(vVec.st*aberration)).g;
-    //refract.b = texture2D(refraction, (coord+nVec.st)*1.0-(vVec.st*aberration*2.0)).b;
-
-    //vec4 diffuse = texture2D(diffuse, gl_TexCoord[0].st*texscale).rgba;
-    vec3 color = mix(vec3(0.1), reflect*vec3(0.6,0.9,1), fresnel+reflectivity);
+    vec4 diffuse = texture2D(diffuse, gl_TexCoord[0].st*texscale).rgba;
+    vec3 color = mix(diffuse.rgb*vec3(0.2,0.8,1), reflect*vec3(0.6,0.9,1), clamp(fresnel+reflectivity,0.7,0.98));
 
     gl_FragColor = vec4(color,0.3);
 }
@@ -95,5 +88,5 @@ for mat in mesh.materials:
 		shader.setAttrib(g.SHD_TANGENT)
 		shader.setSampler('reflection',0)
 		#shader.setSampler('refraction',1)
-		#shader.setSampler('normals',2)
-		#shader.setSampler('diffuse',1)
+		#shader.setSampler('normals',1)
+		shader.setSampler('diffuse',1)
