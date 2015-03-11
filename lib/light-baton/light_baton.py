@@ -25,6 +25,7 @@ from bge.logic import *
 from mathutils import *
 from math import *
 import threading
+import aud
 
 class LightBaton(Item):
 	cycle = None
@@ -53,9 +54,30 @@ class LightBaton(Item):
 	def action1(self):
 		if self.activate_date+0.5 > time.time() : return
 		if self.cycle :
+			# play sound
+			path = bge.logic.expandPath('//lib/light-baton/cycle-stop.wav')
+			sound = aud.Factory.file(path)
+			dev = aud.device()
+			cam = bge.logic.getCurrentScene().active_camera
+			vec = self.getOwnerObject().worldPosition - cam.worldPosition
+			dev.listener_location = vec
+			dev.volume = 0.8
+			dev.play(sound)
+			
 			self.cycle['class'].remove()
 			self.cycle = None
 		else :
+			# play sound
+			path = bge.logic.expandPath('//lib/light-baton/cycle-start.wav')
+			sound = aud.Factory.file(path)
+			dev = aud.device()
+			cam = bge.logic.getCurrentScene().active_camera
+			vec = self.getOwnerObject().worldPosition - cam.worldPosition
+			dev.listener_location = vec
+			dev.volume = 0.7
+			dev.play(sound)
+			
+			# spawn the cycle
 			skin = self.getOwner().skin
 			armature = skin.armature
 			anim = skin.animations["set cycle"]
@@ -75,10 +97,10 @@ class LightBaton(Item):
 					self.cycle['class'].armature.replaceMesh(self.cyclecolors[color])
 					for child in self.cycle['class'].armature.children:
 						if 'body' in child:
-							print(child.meshes)
+							#print(child.meshes)
 							child.replaceMesh(self.cyclecolors[color])
-							child.update()
-							print(child.meshes)
+							#child.update()
+							#print(child.meshes)
 					self.cycle['class'].armature.update()
 
 			thread = threading.Thread()
@@ -131,7 +153,7 @@ class LightCycle(Vehicle):
 		Vehicle.exit(self, character)
 
 	def updateCont(self, com):
-		print(self.armature.meshes[0].materials)
+		#print(self.armature.meshes[0].materials)
 		onfloor = self.floor.sensors[0].status # seul capteur
 		obstacle = self.front.sensors[0].status # seul capteur
 		date = time.time()
