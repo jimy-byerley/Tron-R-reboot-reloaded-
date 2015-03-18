@@ -21,14 +21,7 @@ suggestions: jimy.byerley@gmail.com
 
 #### PLAY
 
-to launch the game it is necessary to install Blender (www.blender.org) (version >= 2.70 as known, see compatibility)
-blender is an opensource software and can support many platforms (linux, windows, maxOS)
-
-to start the game :
-  extract the zip file
-  open "boot.blend" from the tron-reboot directory with blender and press 'P' in the 3D view.
-Or special to linux :
-  $ blenderplayer boot.blend
+to write
 
 
 #### COMPATIBILITY

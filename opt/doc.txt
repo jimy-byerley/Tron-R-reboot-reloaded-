@@ -1,1 +1,0 @@
-Contient les composants indépendants du "système".
