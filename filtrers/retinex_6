@@ -1,0 +1,47 @@
+uniform sampler2D bgl_RenderedTexture;
+
+#define MIN(a,b) (a>b)?b:a
+#define MAX(a,b) (a>b)?a:b
+vec4 contrast( in vec4 value )
+{
+	float fac = 0.8;
+	//float med = (value.x+value.y+value.z)/3;
+	//vec4 result = (value - vec4(med)*0.8)*3;
+	
+	float max = MAX(MAX(value.x, value.y), value.z);
+	value.x -= (max-value.x)*fac;
+	value.y -= (max-value.y)*fac;
+	value.z -= (max-value.z)*fac;
+	
+	return value;
+}
+
+
+vec4 max( in vec4 a, in vec4 b)
+{
+	vec4 r = vec4(0);
+	r.x = (a.x>b.x)?a.x:b.x;
+	r.y = (a.y>b.y)?a.y:b.y;
+	r.z = (a.z>b.z)?a.z:b.z;
+	return r;
+}
+
+int retinex_size = 12;
+
+void main(void)
+{
+
+	vec4 bloom = vec4(0);
+		
+	//int j;
+	int i;
+
+	for(i=-retinex_size; i<=retinex_size; i++)
+		bloom += texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + vec2(i,0)*0.0016);
+	for(i=-retinex_size; i<=retinex_size; i++)
+		bloom += texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + vec2(0,i)*0.0016);
+	bloom /= retinex_size*4+2;
+	vec4 value =  texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
+	
+	gl_FragColor = max(value,contrast(bloom));
+}

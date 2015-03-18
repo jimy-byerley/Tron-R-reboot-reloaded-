@@ -1,0 +1,35 @@
+uniform sampler2D bgl_RenderedTexture;
+
+
+#define MIN(a,b) (a>b)?b:a
+#define MAX(a,b) (a>b)?a:b
+vec4 contrast( in vec4 value )
+{
+	static float fac = 0.8;
+	
+	static float max = MAX(MAX(value.x, value.y), value.z);
+	value.x -= (max-value.x)*fac;
+	value.y -= (max-value.y)*fac;
+	value.z -= (max-value.z)*fac;
+	
+	return value;
+}
+
+void main(void)
+{
+    // RGB difraction
+    vec2 pos = gl_TexCoord[0].st;
+    vec2 pixpos = vec2(0);
+    vec4 pix = vec4(0);
+    int i=15;
+    for (i; i<30; i++)
+    {
+        pixpos = vec2(round(pos.x*i)/i, round(pos.y*i)/i);
+        pix += texture2D(bgl_RenderedTexture, pixpos);
+        pix += texture2D(bgl_RenderedTexture, pixpos+vec2(1/i));
+    }
+    pix *= 0.05;
+    // add to original pixel
+    vec4 value = texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
+	gl_FragColor = min(vec4(1), value + pow(contrast(pix), 3));
+}
