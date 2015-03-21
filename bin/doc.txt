@@ -1,3 +1,0 @@
-Contient tous les programmes (personnages joueurs ou non-joueurs) du jeu.
-Aucun de ceux-ci n'est l'utilisateur cat il n'est ni un avatar en réseau ni un PNJ puisqu'il est directement relié
-au moteur de jeu.

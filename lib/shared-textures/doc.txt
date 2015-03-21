@@ -1,3 +1,0 @@
-Contient toutes les textures qui peuvent etre partagées, toutefois il est nécessaire de faire attention à ne pas
-écraser ou modifier des textures nécessaires pour certains objets.
-
