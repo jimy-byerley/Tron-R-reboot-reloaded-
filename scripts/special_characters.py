@@ -22,6 +22,7 @@ ITEM_ACTION = "item action"
 HEADZ_ACTION = "head Z"
 HEADY_ACTION = "head Y"
 
+# dictionnary of all characters animations
 animations = {
 	
 	'clu' : { # animations pour CLU
@@ -68,4 +69,16 @@ animations = {
 		},
 	}
 
+# dynamicaly defined animations
 animations['flynn'] = animations['clu']
+
+# some prefixes
+models = 'models/'
+special_characters = models+'characters/'
+
+# locations of file of all skins
+files = {
+	'clu' : special_characters+'clu.blend',
+	'flynn' : special_characters+'flynn.blend',
+	'monitor' : special_characters+'monitor.blend',
+	}

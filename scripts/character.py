@@ -35,8 +35,23 @@ def add_special_skin(name, ref) :
 	Le personnage est détecté par son armature qui doit etre nommée name+' armature', tous le reste du skin doit etre
 	dans la parenté descendant de l'armature.
 	"""
+	armature_name = name+" armature"
+	# check if the skin is loaded
+	if name in special_characters.files:
+		skin_file = special_characters.files[name]
+	else: 
+		print("error: unable to find a file for skin "+name)
+		return None
+	# load if not
+	if skin_file not in bge.logic.LibList(): 
+		bge.logic.LibLoad(bge.logic.game_path+'/'+skin_file, "Scene", load_actions=True)
+	# add to scene
 	scene = bge.logic.getCurrentScene()
-	return scene.addObject(name+" armature", ref)
+	armature = scene.objects[armature_name]
+	armature.worldPosition = ref.worldPosition
+	armature.worldOrientation = ref.worldOrientation
+	#return scene.addObject(name+" armature", ref)
+	return armature
 
 def add_generic_skin(name, ref) :
 	return False
@@ -424,8 +439,8 @@ class Skin(object) :
 		"""
 		item peut etre un KX_GameObject ou bien l'indice de l'item, si item egal "hand", l'objet tenu en main est alors détaché
 		"""
-		#print(self.items, self.handitem)
 		if type(item) == int :
+			if item >= len(self.items): return
 			index = item
 			obj = self.items[index]
 		elif item == "hand" :
@@ -645,7 +660,6 @@ class Character(object) :
 				if self.body_hair : self.body_hair.visible = True
 		
 		elif camera == "fps" :
-			print('fps')
 			scene.active_camera = self.camera_fps
 			if self.body_head :   self.body_head.visible = False
 			if self.body_hair :   self.body_hair.visible = False

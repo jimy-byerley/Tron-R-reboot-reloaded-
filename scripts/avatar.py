@@ -144,9 +144,9 @@ def init() :
 	first_player.setCameraActive("tps");
 	first_player.setCameraActive("fps");
 	owner.setParent(first_player.box)
-	thread = threading.Thread()
-	thread.run = mouse_thread
-	thread.start()
+	#thread = threading.Thread()
+	#thread.run = mouse_thread
+	#thread.start()
 
 
 def setup_overlay() :
