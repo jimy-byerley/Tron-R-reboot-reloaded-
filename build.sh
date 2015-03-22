@@ -9,11 +9,13 @@ useless files
 	all files or directory found in projects.lst
 use:
 	./build.sh [PATH]
+
+ONRROR: see README.md
 "
 	return
 fi
 
-extensions='*.xcf *.blend1'
+extensions='*.xcf *.blend1 *.bat'
 
 for ext in $extensions; do
 	listfiles=$(find . -name "$ext")
