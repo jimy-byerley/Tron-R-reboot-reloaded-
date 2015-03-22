@@ -1,6 +1,7 @@
 # Tron-R{reboot||reloaded}
 main repository of the Tron-R{reboot||reloaded} game project
 
+
 #### THE PROJECT
 
 This is the main part of the Tron-R{reboot||reloaded} project which attempt to be a new open-source game 
@@ -19,9 +20,36 @@ made after the film.
 suggestions: jimy.byerley@gmail.com
 
 
+
 #### PLAY
 
-to write
+Extract the zip file in the installation path
+
+Build/optimize the game
+-----------------------
+
+	It will download the blender software from the official repository and remove useless files.
+	GNU/Linux: 
+		$ ./build.sh
+	or
+		$ ./build.sh -d       (developer mode: don't remove useless files)
+	or
+		$ ./build.sh -p PATH  specify to use PATH for blender instead of downloading it. This path is the location where the blenderplayer executable is.
+
+	Windows:
+		run build.bat (download blender and remove useless files)
+	If you know what you do, you can also change the blenderplayer executable path, by changing value in blenderplayer_path.txt
+
+Launch it!
+----------
+	GNU/Linux:
+	$ ./aperture.sh         (flynn like mode)
+	$ ./tron-r              (standard game menu mode)
+	$ ./mainscene_loader.sh (manual mode : puts you directly in the virtual world)
+
+	Windows:
+	Execute Tron-R executable file
+
 
 
 #### COMPATIBILITY
