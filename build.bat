@@ -1,5 +1,8 @@
 @echo off
 
+rem add path for common tools
+set PATH=%PATH%;%CD%/softwares/win-utils
+
 rem get system architecture
 set RegQry=HKLM\Hardware\Description\System\CentralProcessor\0
  
@@ -26,4 +29,20 @@ if %architecture% == 32 (
 )
 rem extract blender
 7za.exe x blender.zip -o softwares
+del blender.zip
 
+rem delete useless files
+set extensions=.xcf .blend1 .sh
+dir /b /s > tree.txt
+for %e in %extensions% do (
+	find /i %e < tree.txt > toremovelist.txt
+	for /F "tokens=*" %f in (toremovelist.txt) do (
+		del %f
+	)
+)
+del tree.txt
+del toremovelist.txt
+
+for /F "tokens=*" %p in (projects.lst) do (
+	rmdir /S %p
+)
