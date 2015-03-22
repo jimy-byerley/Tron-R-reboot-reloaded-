@@ -30,6 +30,8 @@ Build/optimize the game
 
 	It will download the blender software from the official repository and remove useless files.
 	GNU/Linux: 
+		You will need wget to be installed
+		# apt-get install wget
 		$ ./build.sh
 	or
 		$ ./build.sh -d       (developer mode: don't remove useless files)
