@@ -23,9 +23,9 @@ del StringCheck.txt
 
 rem download blender
 if %architecture% == 32 (
-	wget --progress=bar http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.73/blender-2.73a-windows32.zip -o blender.zip
+	wget --progress=bar http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.72/blender-2.72-windows32.zip -o blender.zip
 ) else (
-	wget --progress=bar http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.73/blender-2.73a-windows64.zip -o blender.zip
+	wget --progress=bar http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.72/blender-2.72-windows64.zip -o blender.zip
 )
 rem extract blender
 7za.exe x blender.zip -o softwares
