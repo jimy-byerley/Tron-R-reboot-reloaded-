@@ -57,6 +57,6 @@ Launch it!
 #### COMPATIBILITY
 
 OS platform: Linux (tested), but mabe windows and maxOS should work too.
-Blender :  version >= 2.70  (made with blender 2.73)
+Blender :  version >= 2.70  (made with blender 2.72)
 
 bugs: jimy.byerley@gmail.com
