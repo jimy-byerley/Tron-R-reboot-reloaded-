@@ -60,9 +60,9 @@ if [ -n $blenderpath ]; then
 	echo "architecture is $arch."
 	
 	if [ $arch == "x86_64" ]; then
-		wget http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.73/blender-2.73a-linux-glibc211-x86_64.tar.bz2 -O blender.tar.bz2
+		wget http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.72/blender-2.72-linux-glibc211-x86_64.tar.bz2 -O blender.tar.bz2
 	else
-		wget http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.73/blender-2.73a-linux-glibc211-i686.tar.bz2 -O blender.tar.bz2
+		wget http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.72/blender-2.72-linux-glibc211-i686.tar.bz2 -O blender.tar.bz2
 	fi
 	echo "extracting ..."
 	tar xf blender.tar.bz2 -C software/
