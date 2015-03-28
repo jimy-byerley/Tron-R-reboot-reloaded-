@@ -1,1 +1,1 @@
-software/blender
+/usr/local/share/blender

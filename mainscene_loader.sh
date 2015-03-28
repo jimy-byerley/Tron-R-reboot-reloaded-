@@ -1,2 +1,2 @@
 #!/bin/sh
-$(cat blenderplayer_path.txt)/blenderplayer scenes/main.blend
+$(cat blenderplayer_path.txt)/blenderplayer "$@" scenes/main.blend

@@ -42,6 +42,7 @@ own.visible = False
 
 #initializing camera for reflection pass
 pos = (viewer.position - own.position)*m1
+#watercamera.near = abs((watercamera.position - own.position - pos*r180*unmir*m2).z/2)
 watercamera.position = own.position + pos*r180*unmir*m2
 ori = Matrix(viewer.orientation)
 ori.transpose()
