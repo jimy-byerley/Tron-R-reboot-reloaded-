@@ -19,8 +19,49 @@ This file is part of Tron-R.
 
 import bge
 from bge import texture
+
+
+#######################################
+### FUNCTIONS USED TO SPAWN AN ITEM ###
+
+# Each function used to spawn a new item should receive 2 arguments :
+#    rule : the item's definition line from 'items' list
+#    properties : a dictionaary of parameters the item should take (see backup_manager.py:dump_item())
+
+def just_spawn(rule, properties):
+	""" Function to call to spawn a custom item (not the plug and play to use solution). """
+	pass
+
+def item_init():
+	"""
+	Generic initializer for item object.
+	This function is to put in the definition list (see below), as function to initialize, or 
+	to call from a python logick brick with 'module' option.
+	"""
+	cont = bge.logic.getCurrentController()
+	owner = cont.owner
+
+	owner['class'] = Item(owner, owner["itemname"], owner["hand"], owner["attach"])
+	owner['class'].init()
+
+
+###############################################################################
+### ITEMS DECLARATIONS (to do dynamicaly from item script file if there is) ###
+
+items = [
+	# Each line is of type :
+	# ("disk",            "disk.blend",      just_spawn,      None),
+	# format :
+	# (itemname,          file to load,      function to call to spawn a new item,  function to initialize the new item (or None))
+]
+
+
  
 class Item(object):
+	""" 
+	Standard item class, If you create an item with a class, you should use it, or create a 
+	class with same methods.
+	"""
 	colors = []
 	def __init__(self, kxobject, name, handbone, bodybone):
 		self.object = kxobject
@@ -86,12 +127,3 @@ class Item(object):
 	#clic milieu
 	def action3(self):
 		pass
-
-
-def item_init():
-	cont = bge.logic.getCurrentController()
-	owner = cont.owner
-
-	owner['class'] = Item(owner, owner["itemname"], owner["hand"], owner["attach"])
-	owner['class'].init()
-

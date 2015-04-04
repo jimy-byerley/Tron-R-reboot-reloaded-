@@ -115,7 +115,7 @@ class Skin(object) :
 			self.animations = special_characters.animations[skin_name]
 
 	def __repr__(self) :
-		return "'{}(skin_name={}, collisionbox={})" % (self.__class__.__name__, self.skin_name, self.box)
+		return "'%s(skin_name=%s, collisionbox=%s)" % (self.__class__.__name__, repr(self.skin_name), repr(self.box))
 
 
 		
@@ -533,7 +533,7 @@ class Character(object) :
 		self.itemtoggle_date = 0.
 
 	def __repr__(self) :
-		return "{}(name={})".format(self.__class__.__name__, self.name)
+		return "%s(name=%s)".format(self.__class__.__name__, repr(self.name))
 
 	def spawn(self, ref) :
 		scene = bge.logic.getCurrentScene();

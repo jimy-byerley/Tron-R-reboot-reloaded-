@@ -231,3 +231,7 @@ class IDDisc(Item):
 		vec = self.object['launcher'].worldPosition + Vector((0,0,1.2)) - self.object.worldPosition
 		vec.normalize()
 		self.object.worldLinearVelocity = vec
+
+
+
+items.append(('disk',    'disk.blend',    just_spawn,   do_nothing))

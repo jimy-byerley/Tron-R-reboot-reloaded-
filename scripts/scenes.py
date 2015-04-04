@@ -1,3 +1,22 @@
+"""
+Copyright 2014,2015 Yves Dejonghe
+
+This file is part of Tron-R.
+
+    Tron-R is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Tron-R is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Tron-R.  If not, see <http://www.gnu.org/licenses/>. 2
+"""
+
 import time
 import bge
 import math
@@ -34,6 +53,8 @@ def on_distance(distance):
 def on_distance_and_loaded(playerdistance, scenes):
 	return False
 
+#############################
+### SCENES S DECLARATIONS ###
 
 scenes = [
 	# functions to decide of loading or not is a function as      
@@ -41,13 +62,15 @@ scenes = [
 	# be carefull because scene dependencies of a dependency will also be loaded with its dependencies.
 	# coordinates (xyz)    file name             function to decide of loading    list of dependencies (other scenes)
 	((1000,0,0),    "small-arena-outside.blend",      on_distance(500),       ("system.blend",)),
-	((0,0,0),       "untitled.blend",                 on_distance(150),       ("system.blend",)),
+	((0,0,0),       "town-part-00.blend",             on_distance(50),        ("system.blend",)),
+	((50,0,0),      "town-part-01.blend",             on_distance(50),        ("system.blend",)),
 	((0,0,0),       "system.blend",                   None,                   ()),
 ]
 
 
 
 def thread_loader():
+	#print(bge.logic.getSceneList())
 	to_load = [False] * len(scenes)
 	for i in range(len(scenes)):
 		# if no scene is depending on
@@ -68,6 +91,7 @@ def thread_loader():
 		if to_load[i] and (libname not in liblist) :
 			print("module \"%s\": load scene \"%s\" ..." % (__name__, libname))
 			bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
+			break # otherwise the game should crash
 		
 		elif (not to_load[i]) and (libname in liblist) :
 			#print("module \"%s\": unload scene \"%s\" ..." % (__name__, libname))

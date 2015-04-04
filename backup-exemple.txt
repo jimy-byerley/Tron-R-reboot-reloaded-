@@ -1,0 +1,27 @@
+characters = {
+	"clu" : {
+		"items" : {
+			"left baton" : "itemname",
+		},
+		"hp" : 0.9,
+		"energy" : 1.0,
+	},
+}
+
+vehicles = {
+	"vehiclename" : {
+		"pos" : 
+	
+}
+
+items = [
+	 {
+		"name" : "itemname"
+		"pos" : (0,0,0),
+		"rot" : (0,0,0),
+		"linear velocity" : (0,0,0),
+		"linear " : (0,0,0),
+		"properties" : {
+	},
+	
+]
