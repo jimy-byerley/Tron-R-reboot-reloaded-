@@ -20,6 +20,16 @@ This file is part of Tron-R.
 import bge
 
 
+# indexes for 'vehicles' list.
+NAME = 0
+FILE = 1
+SPAWN = 2
+INIT = 3
+
+
+
+
+
 # constantes pour les commandes passées au vehicule
 FORD = 0
 BACK = 1

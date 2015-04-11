@@ -337,3 +337,6 @@ def update_skybox() :
 	cont = bge.logic.getCurrentController()
 	owner = cont.owner
 	owner.worldPosition = first_player.box.worldPosition
+
+def update_bloom_fac(cont) :
+	cont.owner['bloom_fac'] = 1.9/Rasterizer.getWindowWidth()

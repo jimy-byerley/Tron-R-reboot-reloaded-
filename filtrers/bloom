@@ -1,4 +1,5 @@
 uniform sampler2D bgl_RenderedTexture;
+uniform float bloom_fac;
 
 vec4 contrast( in vec4 value )
 {
@@ -60,7 +61,7 @@ void main(void)
 
 	for(i=0; i<BRUSH_LEN; i++)
 	{
-		bloom += texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + brush[i]*0.0016);
+		bloom += texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + brush[i]*bloom_fac); // bloom_fac or 0.0016
 	}
 	bloom *= 0.8/float(BRUSH_LEN);
 	vec4 value =  texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);

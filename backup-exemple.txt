@@ -1,27 +1,28 @@
-characters = {
-	"clu" : {
-		"items" : {
-			"left baton" : "itemname",
+{
+	'objects' : [],
+	'vehicles' : [],
+	'characters' : [{
+		'pos' : (0.0, 0.0, -168.5055389404297),
+		'id' : 0,
+		'helmet' : False,
+		'angular' : (0.0, 0.0, 0.0),
+		'skin' : 'clu',
+		'velocity' : (0.0, 0.0, -101.000732421875),
+		'scale' : (1.0, 1.0, 1.0),
+		'name' : '<unknown>',
+		'inventory' : {'hand' : None},
+		'properties' : {
+			'active' : True,
+			'first player' : True,
+			'uniqid' : 0,
+			'character' : True,
+			'dump' : 'character',
+			'move speed' : 0.0,
+			'hp' : 1.0,
 		},
-		"hp" : 0.9,
-		"energy" : 1.0,
-	},
+		'orient' : (0.0, 0.0, 0.0),
+		'repr' : "Avatar(name='<unknown>', skin_name='clu')",
+	}],
+	'items' : [{'name' : 'disk', 'id' : 1, 'pos' : (0, 2, 10)}],
+	'max id' : 2,
 }
-
-vehicles = {
-	"vehiclename" : {
-		"pos" : 
-	
-}
-
-items = [
-	 {
-		"name" : "itemname"
-		"pos" : (0,0,0),
-		"rot" : (0,0,0),
-		"linear velocity" : (0,0,0),
-		"linear " : (0,0,0),
-		"properties" : {
-	},
-	
-]

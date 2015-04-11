@@ -234,4 +234,4 @@ class IDDisc(Item):
 
 
 
-items.append(('disk',    'disk.blend',    just_spawn,   do_nothing))
+items.append(('disk',    'disk.blend',    just_spawn,   None))

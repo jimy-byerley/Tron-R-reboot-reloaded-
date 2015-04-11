@@ -18,8 +18,16 @@ This file is part of Tron-R.
 """
 
 import bge
+import time
+import threading
 from bge import texture
 
+
+# indexes for 'items' list.
+NAME = 0
+FILE = 1
+SPAWN = 2
+INIT = 3
 
 #######################################
 ### FUNCTIONS USED TO SPAWN AN ITEM ###
@@ -28,11 +36,24 @@ from bge import texture
 #    rule : the item's definition line from 'items' list
 #    properties : a dictionaary of parameters the item should take (see backup_manager.py:dump_item())
 
-def just_spawn(rule, properties):
+def just_spawn(rule, params):
 	""" Function to call to spawn a custom item (not the plug and play to use solution). """
-	pass
+	libname = bge.logic.expandPath(bge.logic.models_path+'/'+rule[FILE])
+	
+	# load library file if it is not loaded
+	if libname not in bge.logic.LibList():
+		print("module \"%s\": load item library: %s ..." % (__name__, repr(libname)))
+		bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
+		time.sleep(0.5) # delay to prevent the BGE to crash if libraries are loaded to quick
+	scene = bge.logic.getCurrentScene()
+	obj = scene.addObject(rule[NAME], scene.active_camera)
+	configure_item(kx_object)
+	obj['itemname'] = rule[NAME]
+	
+	return obj
 
-def item_init():
+
+def item_init_module():
 	"""
 	Generic initializer for item object.
 	This function is to put in the definition list (see below), as function to initialize, or 
@@ -40,9 +61,11 @@ def item_init():
 	"""
 	cont = bge.logic.getCurrentController()
 	owner = cont.owner
+	item_init(owner)
 
-	owner['class'] = Item(owner, owner["itemname"], owner["hand"], owner["attach"])
-	owner['class'].init()
+def item_init(kx_object):
+	kx_object['class'] = Item(owner, kx_object["itemname"], kx_object["hand"], kx_object["attach"])
+	kx_object['class'].init()
 
 
 ###############################################################################
@@ -50,17 +73,40 @@ def item_init():
 
 items = [
 	# Each line is of type :
-	# ("disk",            "disk.blend",      just_spawn,      None),
+	("disk",            "disk.blend",      just_spawn,      None),
 	# format :
 	# (itemname,          file to load,      function to call to spawn a new item,  function to initialize the new item (or None))
 ]
 
+class item_initializer_thread(threading.Thread):
+	def run(self):
+		bge.logic.canstop += 1
+		obj = self.rule[SPAWN](self.rule, self.config)
+		self.rule[INIT] (obj)
+		bge.logic.canstop -= 1
+
+
+def spawn_item(name, config):
+	i = 0
+	while items[i][NAME] != name: i+=1
+	#for rule in items:
+	#	if rule[NAME] == name:
+	#		break
+	t = item_initializer_thread()
+	t.rule = items[i]
+	t.config = config
+	t.start()
 
  
 class Item(object):
 	""" 
 	Standard item class, If you create an item with a class, you should use it, or create a 
 	class with same methods.
+	
+	The class should be initialized by a function referenced in 'items' list (function to initialize)
+	If you want to create your custom class, you should write an other function that you put in the 
+	items list. Else, you can initialize the item object from a python logic brick and then put None 
+	in the items list at the fourth field.
 	"""
 	colors = []
 	def __init__(self, kxobject, name, handbone, bodybone):

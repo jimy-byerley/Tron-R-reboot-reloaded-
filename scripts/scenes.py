@@ -26,6 +26,7 @@ scene_thread_loop_duration = 5  # (seconds) Set a smaller value if you want the 
 distance_factor = 1. # change this factory to change the global distances to load the scenes, (if you have a bad computer)
 scene_thread_stop = False
 
+# indexes for 'scenes' list.
 LOCATION = 0
 FILE = 1
 TEST = 2
@@ -69,7 +70,12 @@ scenes = [
 
 
 
+flag = 0
 def thread_loader():
+	global flag
+	if flag == 0: # wait until the BGE is initialized
+		time.sleep(0.2)
+		flag = 1
 	#print(bge.logic.getSceneList())
 	to_load = [False] * len(scenes)
 	for i in range(len(scenes)):
@@ -101,7 +107,6 @@ def thread_loader():
 	
 	# release the game
 	bge.logic.canstop -= 1
-
 
 def callback_loader():
 	thread = threading.Thread()

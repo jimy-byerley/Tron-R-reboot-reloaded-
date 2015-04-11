@@ -38,13 +38,14 @@ def add_special_skin(name, ref) :
 	armature_name = name+" armature"
 	# check if the skin is loaded
 	if name in special_characters.files:
-		skin_file = special_characters.files[name]
+		skin_file = bge.logic.expandPath(bge.logic.game_path+'/' + special_characters.files[name])
 	else: 
 		print("error: unable to find a file for skin "+name)
 		return None
 	# load if not
-	if skin_file not in bge.logic.LibList(): 
-		bge.logic.LibLoad(bge.logic.game_path+'/'+skin_file, "Scene", load_actions=True)
+	if skin_file not in bge.logic.LibList():
+		print("module \"%s\": loading skin model \"%s\"" % (__name__, skin_file,))
+		bge.logic.LibLoad(skin_file, "Scene", load_actions=True)
 	# add to scene
 	scene = bge.logic.getCurrentScene()
 	armature = scene.objects[armature_name]
@@ -533,7 +534,7 @@ class Character(object) :
 		self.itemtoggle_date = 0.
 
 	def __repr__(self) :
-		return "%s(name=%s)".format(self.__class__.__name__, repr(self.name))
+		return "%s(name=%s, skin_name=%s)" % (self.__class__.__name__, repr(self.name), repr(self.skin_name))
 
 	def spawn(self, ref) :
 		scene = bge.logic.getCurrentScene();
