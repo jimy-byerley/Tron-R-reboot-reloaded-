@@ -84,7 +84,6 @@ def keyboard_item(cont):
 			bge.logic.startGame("//main.blend")
 		elif name == "configure_settings":
 			frame = armature.getActionFrame(0)
-			print(frame)
 			if frame >= settings_action_loop[0] and frame <= settings_action_loop[1]:
 				armature.playAction('ArmatureAction', 
 					settings_action_start[1], 

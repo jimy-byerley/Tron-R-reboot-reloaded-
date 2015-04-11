@@ -50,13 +50,13 @@ Launch it!
 	$ ./mainscene_loader.sh (manual mode : puts you directly in the virtual world)
 
 	Windows:
-	Execute Tron-R executable file
+	Execute Tron-R.bat executable file
 
 
 
 #### COMPATIBILITY
 
-OS platform: Linux (tested), but mabe windows and maxOS should work too.
+OS platform: Linux (tested), Windows, but mabe maxOS should work too.
 Blender :  version >= 2.70  (made with blender 2.72)
 
 bugs: jimy.byerley@gmail.com
