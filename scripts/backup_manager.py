@@ -23,7 +23,7 @@ import item
 import character
 import threading
 from math import *
-import mypprint2 as pprint
+import mypprint as pprint
 
 
 save_file = "" # file to save automaticaly the current file
