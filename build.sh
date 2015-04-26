@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# move to the script's path
+cd $(dirname $0)
+
 if [ "$1" == "-h" ]; then 
 	echo "simple sh script used to optimize the game installation.
 This program will remove several files that are useless for pure game runtime.
