@@ -3,6 +3,8 @@ from bge.logic import *
 from bge.events import *
 from mathutils import *
 from math import *
+import os
+import sys
 
 
 bge.render.showMouse(True)
@@ -24,8 +26,7 @@ def goto_menu_root():
 		root_action_loop[0], 
 		root_action_loop[1], 
 		layer=0, 
-		play_mode=KX_ACTION_MODE_LOOP)
-	
+		play_mode=KX_ACTION_MODE_LOOP)	
 
 def mouse_rotate_interface(cont):
 	owner = cont.owner
@@ -45,8 +46,27 @@ def mouse_over_item(cont):
 		print(owner.localPosition.y)
 		cursor.localPosition.y = owner.localPosition.y
 
+def start_local():
+	print('detected platform:', sys.platform)
+	if sys.platform in ('linux', 'linux2'):
+		f = open(bge.logic.expandPath('//../blenderplayer_path.txt'), 'r')
+		blenderplayer = f.read()[:-1] +'/blenderplayer'
+		f.close()
+		width = 1024
+		height = 600
+		command = '%s -w %d %d %s - -l %s' % (
+			blenderplayer,
+			width, height,
+			bge.logic.expandPath('//main.blend'),
+			bge.logic.expandPath('//../backup-exemple.txt'),
+		)
+		print(command)
+		os.system(command)
+	if sys.platform in ('win', 'win32', 'win64'):
+		pass
+
 root_items = None
-root_item_selected = 2
+root_item_selected = 3
 
 def keyboard_item(cont):
 	global root_items, root_item_selected
@@ -81,7 +101,8 @@ def keyboard_item(cont):
 	if keyboard.getKeyStatus(ENTERKEY) == KX_INPUT_JUST_ACTIVATED:
 		name = root_items[root_item_selected].name
 		if name == "enter_local_grid":
-			bge.logic.startGame("//main.blend")
+			#bge.logic.startGame("//main.blend")
+			start_local()
 		elif name == "configure_settings":
 			frame = armature.getActionFrame(0)
 			if frame >= settings_action_loop[0] and frame <= settings_action_loop[1]:
