@@ -1,8 +1,22 @@
 #!/bin/sh
 
+# move to the script's directory
+cd $(dirname $0)
+# this script can be placed in a bin, with a share in the save path as the bin directory, then move to the shared directory
+if [ ! -e blenderplayer_path.txt ]; then cd ../share; fi
+
 # prevent crashes (known)
 PULSE_LATENCY_MSEC=
 export PULSE_LATENCY_MSEC
 
+# display custom message
+echo "\
+
+|''||''|                                ' '||''|.   
+   ||    ... ..    ...   .. ...            ||   ||  
+   ||     ||' '' .|  '|.  ||  ||  ||||||   ||''|'   
+   ||     ||     ||   ||  ||  ||           ||   |.  
+  .||.   .||.     '|..|' .||. ||.         .||.  '|' 
+"
 # launch
-$(cat blenderplayer_path.txt)/blenderplayer scenes/menu.blend "$@"
+$(cat blenderplayer_path.txt)/blenderplayer scenes/menu.blend "$@"  # game should have been builded (build.sh)
