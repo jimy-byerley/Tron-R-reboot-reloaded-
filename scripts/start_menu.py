@@ -47,7 +47,7 @@ def mouse_over_item(cont):
 		cursor.localPosition.y = owner.localPosition.y
 
 def start_local():
-	print('detected platform:', sys.platform)
+	print(sys.platform)
 	if sys.platform in ('linux', 'linux2'):
 		f = open(bge.logic.expandPath('//../blenderplayer_path.txt'), 'r')
 		blenderplayer = f.read()[:-1] +'/blenderplayer'
@@ -138,3 +138,4 @@ def keyboard_item(cont):
 
 def init(cont):
 	goto_menu_root()
+	
