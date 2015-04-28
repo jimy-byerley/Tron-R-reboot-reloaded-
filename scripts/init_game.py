@@ -6,6 +6,8 @@ config_file = None
 game_file = None
 
 i = 0
+while sys.argv[i] != '-' : i += 1
+i += 1
 while i < len(sys.argv):
 	arg = sys.argv[i]
 	if arg in ('-c', '--config'):
@@ -31,15 +33,63 @@ bge.logic.models_path = game_path+'/models'
 
 import scenes
 import backup_manager
+import avatar
 
+## load global configuration file ##
 
-if game_file:
-	print('loading backup file \"%s\"' % game_file)
-	backup_manager.loadbackup(game_file)
-	backup_manager.save_file = game_file
-	backup_manager.autosave = True
+try: f = open(bge.logic.expandPath("//../config.txt"), 'r')
+except IOError:
+	print('config.txt not found, use default values instead.')
+else:
+	lines = f.readlines()
+	f.close()
+	config = {}
+	for line in lines:
+		line = line.expandtabs()
+		name = ""
+		value = ""
+		i = 0
+		while line[i] != ' ':	i += 1
+		name = line[:i]
+		j = i
+		while line[i] == ' ':	i += 1
+		while line[j] != '\n':	j += 1
+		value = line[i:j]
+		config[name] = eval(value)
+
+bge.logic.config = config
 
 ### thread usage ###
 
 bge.logic.canstop = 0
 # when creating a thread, add 1 to this value, when thread ends, substract 1 to this value
+
+## load game backup (last in config file or specified in commandline) ##
+
+if not game_file and 'game_backup' in config:
+	game_file = config['game_backup']
+if game_file:
+	print('loading backup file \"%s\"' % game_file)
+	backup_manager.loadbackup(game_file, async=False)
+	backup_manager.save_file = game_file
+	backup_manager.autosave = True
+
+## load scenes in direct environment ##
+
+scene = bge.logic.getCurrentScene()
+fp_dump = None
+if game_file:
+	for dump in backup_manager.last_backup['characters']:
+		if dump['id'] == config['object_id']:
+			fp_dump = dump
+
+if fp_dump == None :
+	spawner = scene.addObject("first player spawn", scene.active_camera)
+	spawner['character_name'] = config['nickname']
+	spawner['skin'] = config['skin']	
+else:
+	scene.active_camera.worldPosition = fp_dump['pos']
+	scenes.thread_loader()
+	backup_manager.thread_loader()
+	avatar.init_noauto(config, fp_dump)
+scene.addObject("root", scene.active_camera)

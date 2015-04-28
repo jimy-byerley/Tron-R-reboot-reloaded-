@@ -47,7 +47,7 @@ def mouse_over_item(cont):
 		cursor.localPosition.y = owner.localPosition.y
 
 def start_local():
-	print(sys.platform)
+	print('platform detected:', sys.platform)
 	if sys.platform in ('linux', 'linux2'):
 		f = open(bge.logic.expandPath('//../blenderplayer_path.txt'), 'r')
 		blenderplayer = f.read()[:-1] +'/blenderplayer'
@@ -62,8 +62,22 @@ def start_local():
 		)
 		print(command)
 		os.system(command)
-	if sys.platform in ('win', 'win32', 'win64'):
-		pass
+	elif sys.platform in ('win', 'win32', 'win64'):
+		f = open(bge.logic.expandPath('//..\\blenderplayer_path.txt'), 'r')
+		blenderplayer = f.read()[:-1] +'\\blenderplayer'
+		f.close()
+		width = 1024
+		height = 600
+		command = '%s -w %d %d %s - -l %s' % (
+			blenderplayer,
+			width, height,
+			bge.logic.expandPath('//main.blend'),
+			bge.logic.expandPath('//..\\backup-exemple.txt'),
+		)
+		print(command)
+		os.system(command)
+	else:
+		print('Fatal error: unsupported platform.')
 
 root_items = None
 root_item_selected = 3

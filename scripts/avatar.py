@@ -30,14 +30,15 @@ import time
 import vehicle
 import copy
 import random
+import backup_manager
 
 class Avatar(character.Character) :
 	"""
 	Cette classe représente le joueur à la première personne sur cet ordinateur.
 	"""
 
-	def spawn(self, ref) :
-		character.Character.spawn(self, ref)
+	def spawn(self, ref, existing=False) :
+		character.Character.spawn(self, ref, existing)
 		self.overlay = None
 		for scene in bge.logic.getSceneList() :
 			if scene.name == "overlay" :
@@ -124,29 +125,41 @@ class Avatar(character.Character) :
 		thread.start()
 		
 		
-		
-
 
 first_player = None
 
 
 
-def init() :
-	cont = bge.logic.getCurrentController();
-	owner = cont.owner;
-	scene = bge.logic.getCurrentScene();
+def init(cont) :
+	owner = cont.owner
+	scene = bge.logic.getCurrentScene()
 
-	global first_player;
+	global first_player
+	if first_player != None: return
 	bge.logic.addScene("overlay", 2)
 	
-	owner["p"] = first_player = Avatar(owner["character_name"], owner["skin"]);
-	first_player.spawn(owner);
-	first_player.setCameraActive("tps");
-	first_player.setCameraActive("fps");
-	owner.setParent(first_player.box)
-	#thread = threading.Thread()
-	#thread.run = mouse_thread
-	#thread.start()
+	first_player = Avatar(owner["character_name"], owner["skin"])
+	first_player.spawn(owner)
+	first_player.setCameraActive("tps")
+	first_player.setCameraActive("fps")
+	#owner.setParent(first_player.box)
+
+def init_noauto(game_config, player_dump) :
+	global first_player
+	if first_player != None:
+		print('first player is initialized yet.')
+		return
+	bge.logic.addScene("overlay", 2)
+	fp_obj = None
+	for obj in bge.logic.getCurrentScene().objects:
+		if 'uniqid' in obj and obj['uniqid'] == game_config['object_id']:
+			fp_obj = obj
+	scene = bge.logic.getCurrentScene()
+	first_player = Avatar(game_config['nickname'], game_config["skin"])
+	first_player.spawn(scene.active_camera, existing=fp_obj)
+	first_player.setCameraActive("tps")
+	first_player.setCameraActive("fps")
+
 
 
 def setup_overlay() :
@@ -303,6 +316,7 @@ def mouse_input() :
 	Cette fonction est parametrée par les champs du fichier config.py dans le meme repertoire
 	Ce callback est appele par le spawn du premier joueur
 	"""
+	global mx, my, first_player, headcam, boxrotz
 	cont = bge.logic.getCurrentController()
 	own = cont.owner
 	sens = cont.sensors[0]
@@ -321,7 +335,6 @@ def mouse_input() :
 	if _click(sens, config.interact.itemaction3):
 		first_player.actionItem(3)
 	
-	global mx, my, first_player, headcam, boxrotz
 	mx += sens.position[0] - WIN_MIDDLE_X
 	my += sens.position[1] - WIN_MIDDLE_Y
 	x = (mx)*config.mouse.sensibility

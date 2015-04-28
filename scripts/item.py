@@ -21,6 +21,8 @@ import bge
 import time
 import threading
 from bge import texture
+import backup_manager
+import tools
 
 
 # indexes for 'items' list.
@@ -44,10 +46,11 @@ def just_spawn(rule, params):
 	if libname not in bge.logic.LibList():
 		print("module \"%s\": load item library: %s ..." % (__name__, repr(libname)))
 		bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
-		time.sleep(0.5) # delay to prevent the BGE to crash if libraries are loaded to quick
+		time.sleep(1) # delay to prevent the BGE to crash if libraries are loaded to quick
+		#tools.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
 	scene = bge.logic.getCurrentScene()
 	obj = scene.addObject(rule[NAME], scene.active_camera)
-	configure_item(kx_object)
+	backup_manager.configure_item(obj, params)
 	obj['itemname'] = rule[NAME]
 	
 	return obj
@@ -82,16 +85,14 @@ class item_initializer_thread(threading.Thread):
 	def run(self):
 		bge.logic.canstop += 1
 		obj = self.rule[SPAWN](self.rule, self.config)
-		self.rule[INIT] (obj)
+		if self.rule[INIT]:
+			self.rule[INIT] (obj)
 		bge.logic.canstop -= 1
 
 
 def spawn_item(name, config):
 	i = 0
 	while items[i][NAME] != name: i+=1
-	#for rule in items:
-	#	if rule[NAME] == name:
-	#		break
 	t = item_initializer_thread()
 	t.rule = items[i]
 	t.config = config

@@ -1,0 +1,7 @@
+nickname      "CLU"
+skin          "clu"
+object_id     0
+filter_bloom          True
+filter_FXAA           True
+filter_history_mode   False
+filter_field_depth    False

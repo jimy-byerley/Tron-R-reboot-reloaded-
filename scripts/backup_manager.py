@@ -17,6 +17,7 @@ This file is part of Tron-R.
     along with Tron-R.  If not, see <http://www.gnu.org/licenses/>. 2
 """
 
+import time
 import bge
 import vehicle
 import item
@@ -55,7 +56,8 @@ marker_vehicle   = "vehicle"    # object will be saved as a vehicle
 marker_object    = "object"     # object properties and physic state will be saved
 marker_dontsave  = ""           # object will not be saved, equivalent to not define the property
 
-properties_blacklist = ["class","repr","armature"]   # list of kx_object properties unsaved (because of eval() is not possible)
+properties_blacklist = ["class","repr","armature", "uniqid"]   # list of kx_object properties unsaved (because of eval() is not possible)
+properties_supported = [int, str, list, dict, set, float, bytes] # list ob kx_object properties types which can be serialized (can be extended by other modules)
 
 
 def get_object_id(kx_object):
@@ -95,7 +97,7 @@ def dump_object(kx_object):
 	
 	properties = {}
 	for prop_name in kx_object.getPropertyNames():
-		if prop_name not in properties_blacklist:
+		if (prop_name not in properties_blacklist) and (type(kx_object[prop_name]) in properties_supported):
 			properties[prop_name] = kx_object[prop_name]
 	if properties:
 		dump["properties"] = properties
@@ -127,18 +129,24 @@ def dump_character(kx_object):
 	# items (just item name and properties)
 	inventory = {}
 	if character.skin.handitem:
-		inventory["hand"] = character.skin.handitem['itemname']
+		item = character.skin.handitem
+		properties = {}
+		for prop_name in item.getPropertyNames():
+			if (prop_name not in properties_blacklist) and (type(item[prop_name]) in properties_supported):
+				properties[prop_name] = item[prop_name]
+		inventory["hand"] = (get_object_id(item), item["itemname"], properties)
 	else:
 		inventory["hand"] = None
 	attachs = character.skin.attachs
 	items = character.skin.items
 	for i in range(len(attachs)):
 		item = items[i]
-		if item: 
+		if item:
 			properties = {}
 			for prop_name in item.getPropertyNames():
-				properties[prop_name] = item[prop_name]
-			inventory[attachs[i]] = (get_object_id(item), item["itemname"], properties)
+				if (prop_name not in properties_blacklist) and (type(item[prop_name]) in properties_supported):
+					properties[prop_name] = item[prop_name]
+			inventory[attachs[i].name] = (get_object_id(item), item["itemname"], properties)
 	dump["inventory"] = inventory
 	
 	return dump
@@ -184,10 +192,12 @@ def dump_all(scenestodump=['Scene']):
 					if dump == "character":
 						dump = dump_character(obj)
 						loaded.append(dump['id'])
-						for i in range(len(last_backup['characters'])):
+						i = 0
+						while i < len(last_backup['characters']):
 							#pprint.pprint(last_backup['characters'][i])
 							if last_backup['characters'][i]['id'] == dump['id']:
 								last_backup['characters'].pop(i)
+							i += 1
 						last_backup['characters'].append(dump)
 					
 					elif dump == "vehicle":
@@ -196,9 +206,14 @@ def dump_all(scenestodump=['Scene']):
 						last_backup['vehicles'].append(dump)
 					
 					elif dump == "item":
-						if not obj.parent or "character" not in obj.parent :
+						if not obj.parent or not (obj.parent.parent and "character" not in obj.parent) :
 							dump = dump_item(obj)
 							loaded.append(dump['id'])
+							i = 0
+							while i < len(last_backup['items']):
+								if last_backup['items'][i]['id'] == dump['id']:
+									last_backup['items'].pop(i)
+								i += 1
 							last_backup['items'].append(dump)
 	
 	# remove last_backup IDs which are not in unloaded or in loaded objects
@@ -228,7 +243,20 @@ def configure_object(obj, params):
 		else:	obj['class'] = item_def
 
 
+def configure_item(obj, params):
+	configure_object(obj, params)
+	if 'owner' in params:
+		skin = params['owner']['class'].skin
+		skin.attach(obj, params['attach'])
+
+
+thread_loader_running = False
 def thread_loader():
+	global thread_loader_running
+	# one instance only
+	if thread_loader_running: return
+	thread_loader_running = True
+
 	bge.logic.canstop += 1 # the game could not be stopped, except if canstop is equal to 0
 	
 	scene = bge.logic.getCurrentScene()
@@ -249,6 +277,20 @@ def thread_loader():
 			new_char.toggleHelmet(config['helmet'])
 			configure_object(new_char.box, config)
 			unloaded.pop(unloaded.index(config['id']))
+			inventory = config['inventory']
+			for attach in inventory:
+				if inventory[attach] != None:
+					itemconf = {
+						'id':   inventory[attach][0],
+						'name': inventory[attach][1],
+						'properties': inventory[attach][2],
+					}
+					print('load item \"%s\" for character %s' % (itemconf['name'], config['name']))
+					itemconf['owner'] = new_char.box
+					itemconf['attach'] = attach
+					item.spawn_item(itemconf['name'], itemconf)
+					unloaded.pop(unloaded.index(itemconf['id']))
+				
 	
 	for config in last_backup['items']:
 		obpos = config['pos']
@@ -260,48 +302,59 @@ def thread_loader():
 	
 	# release the game
 	bge.logic.canstop -= 1
+	thread_loader_running = False
 	
 def callback_loader():
 	thread = threading.Thread()
 	thread.run = thread_loader
 	thread.start()
-	pass
 
 
-			
-def loadbackup(filename):
+def _loader_thread():
+	global last_backup, loaded, unloaded, max_id
+	filename = save_file
+	try:  f = open(filename, 'r')
+	except IOError:  print('error: backup file \"%s\" not found.' % filename)
+	else:
+		text = f.read()
+		f.close()
+		new_backup = eval(text)
+		last_backup = new_backup
+		max_id = last_backup['max id']
+
+		# check for loaded ids
+		bge.logic.canstop += 1
+		for scene in bge.logic.getSceneList():
+			if scene.name == "Scene":
+				for obj in scene.objects:
+					if 'id' in obj and obj['id'] not in loaded: loaded.append(obj['id'])
+		bge.logic.canstop -= 1
+		
+		# remove last_backup IDs which are not in unloaded or in loaded objects
+		for dataname in ('characters', 'vehicles', 'items', 'objects'):
+			for i in range(len(last_backup[dataname])):
+				id = last_backup[dataname][i]['id']
+				if id not in loaded and id not in unloaded:
+					unloaded.append(last_backup[dataname][i]['id'])
+			for character in last_backup['characters']:
+				for item in character['inventory'].values():
+					if (item != None) and (item[0] not in loaded) and (item[0] not in unloaded):
+						unloaded.append(item[0])
+
+def loadbackup(filename, async=True):
 	# create a new thread, because no error should stop the current thread
-	def _loader_thread():
-		global last_backup, loaded, unloaded
-		try:  f = open(filename, 'r')
-		except IOError:  print('error: backup file \"%s\" not found.' % filename)
-		else:
-			text = f.read()
-			f.close()
-			new_backup = eval(text)
-			last_backup = new_backup
-
-			# check for loaded ids
-			bge.logic.canstop += 1
-			for scene in bge.logic.getSceneList():
-				if scene.name == "Scene":
-					for obj in scene.objects:
-						if 'id' in obj and obj['id'] not in loaded: loaded.append(obj['id'])
-			bge.logic.canstop -= 1
-			
-			# remove last_backup IDs which are not in unloaded or in loaded objects
-			for dataname in ('characters', 'vehicles', 'items', 'objects'):
-				for i in range(len(last_backup[dataname])):
-					id = last_backup[dataname][i]['id']
-					if id not in loaded and id not in unloaded:
-						unloaded.append(last_backup[dataname][i]['id'])
-			
-	t = threading.Thread()
-	t.run = _loader_thread
-	t.start()
+	global save_file
+	save_file = filename
+	if async:
+		t = threading.Thread()
+		t.run = _loader_thread
+		t.start()
+	else:
+		_loader_thread()
 
 
-def savebackup(filename):
+def savebackup(filename=None):
+	if filename == None: filename = save_file
 	try:  f = open(filename, 'w')
 	except IOError:  print('error: unable to write backup file \"%s\"' % filename)
 	else:

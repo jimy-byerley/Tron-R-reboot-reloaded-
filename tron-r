@@ -3,7 +3,7 @@
 # move to the script's directory
 cd $(dirname $0)
 # this script can be placed in a bin, with a share in the save path as the bin directory, then move to the shared directory
-if [ ! -e blenderplayer_path.txt ]; then cd ../share; fi
+if [ ! -e blenderplayer_path.txt ]; then cd ../share/tron-r; fi
 
 # prevent crashes (known)
 PULSE_LATENCY_MSEC=

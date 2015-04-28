@@ -26,6 +26,7 @@ import os
 import time
 import threading
 import special_characters
+import tools
 
 # fonctions utilisées par les classes
 
@@ -45,10 +46,13 @@ def add_special_skin(name, ref) :
 	# load if not
 	if skin_file not in bge.logic.LibList():
 		print("module \"%s\": loading skin model \"%s\"" % (__name__, skin_file,))
-		bge.logic.LibLoad(skin_file, "Scene", load_actions=True)
+		s = bge.logic.LibLoad(skin_file, "Scene", load_actions=True, async=False)
+		time.sleep(1)
+		#tools.LibLoad(skin_file, "Scene", load_actions=True, async=False)
 	# add to scene
 	scene = bge.logic.getCurrentScene()
-	armature = scene.objects[armature_name]
+	armature = scene.addObject(armature_name, scene.active_camera)
+	#armature = scene.objects[armature_name]
 	armature.worldPosition = ref.worldPosition
 	armature.worldOrientation = ref.worldOrientation
 	#return scene.addObject(name+" armature", ref)
@@ -121,8 +125,11 @@ class Skin(object) :
 
 		
 	# affiche l'objet dans la scene
-	def spawn(self) :
-		self.armature = add_skin(self.skin_name, self.box)
+	def spawn(self, existing=None) :
+		if not existing:
+			self.armature = add_skin(self.skin_name, self.box)
+		else:
+			self.armature = existing
 		self.armature.setParent(self.box)
 		self.box["armature"] = self.armature
 		# recuperer les points d'attache pour les items
@@ -536,30 +543,41 @@ class Character(object) :
 	def __repr__(self) :
 		return "%s(name=%s, skin_name=%s)" % (self.__class__.__name__, repr(self.name), repr(self.skin_name))
 
-	def spawn(self, ref) :
+	def spawn(self, ref, existing=None) :
 		scene = bge.logic.getCurrentScene();
-		self.box = scene.addObject("player collision", ref)
-		self.mover = self.box.actuators['Motion']
+		if not existing:
+			self.box = scene.addObject("player collision", ref)
+		else:
+			self.box = existing
 		self.box["hp"] = 1.0
 		self.box["active"] = True
+		self.mover = self.box.actuators['Motion']
 		self.skin = Skin(self.skin_name, self.box)
-		self.skin.spawn();
+		# search for pre-existing skin
+		skin = None
+		if existing:
+			for child in self.box.children:
+				if child.name == self.skin_name+" armature":
+					existing = child
+					break
+		self.skin.spawn(existing)
+		
 		for child in self.box.children :
 			# index jump sensor
 			if "jump sensor" in child and child["jump sensor"] :
-				self.jump_sensor = child;
+				self.jump_sensor = child
 			# camera head
 			if "camera head" in child and child["camera head"] :
-				self.camera_head = child;
+				self.camera_head = child
 		# index cameras, ...
 		for child in self.camera_head.children :
 			if "camera TPS" in child and child["camera TPS"] :
-				self.camera_back = child;
+				self.camera_back = child
 			elif "camera FPS" in child and child["camera FPS"] :
-				self.camera_fps = child;
+				self.camera_fps = child
 			# item sensor
 			elif "item sensor" in child and child["item sensor"] :
-				self.item_sensor = child;
+				self.item_sensor = child
 		# la tête du skin
 		self.body_head = None
 		self.body_hair = None

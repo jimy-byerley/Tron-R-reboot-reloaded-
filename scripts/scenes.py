@@ -21,6 +21,7 @@ import time
 import bge
 import math
 import threading
+import tools
 
 scene_thread_loop_duration = 5  # (seconds) Set a smaller value if you want the loading and unloading of the scenes to be faster
 distance_factor = 1. # change this factory to change the global distances to load the scenes, (if you have a bad computer)
@@ -71,12 +72,21 @@ scenes = [
 
 
 flag = 0
+thread_loader_running = False
 def thread_loader():
 	global flag
-	if flag == 0: # wait until the BGE is initialized
+	global thread_loader_running
+	
+	# uniq instance possible
+	if thread_loader_running: return
+	thread_loader_running = True
+	bge.logic.canstop += 1 # the game could not be stopped, except if canstop is equal to 0
+	
+	# wait until the BGE is initialized
+	if flag == 0:
 		time.sleep(0.2)
 		flag = 1
-	#print(bge.logic.getSceneList())
+	
 	to_load = [False] * len(scenes)
 	for i in range(len(scenes)):
 		# if no scene is depending on
@@ -97,7 +107,8 @@ def thread_loader():
 		if to_load[i] and (libname not in liblist) :
 			print("module \"%s\": load scene \"%s\" ..." % (__name__, libname))
 			bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
-			break # otherwise the game should crash
+			time.sleep(1)
+			#tools.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
 		
 		elif (not to_load[i]) and (libname in liblist) :
 			#print("module \"%s\": unload scene \"%s\" ..." % (__name__, libname))
@@ -107,11 +118,12 @@ def thread_loader():
 	
 	# release the game
 	bge.logic.canstop -= 1
+	# exit uniq instance
+	thread_loader_running = False
 
 def callback_loader():
 	thread = threading.Thread()
 	thread.run = thread_loader
-	bge.logic.canstop += 1 # the game could not be stopped, except if canstop is equal to 0
 	thread.start()
 		
 
