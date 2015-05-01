@@ -44,9 +44,11 @@ def just_spawn(rule, params):
 	
 	# load library file if it is not loaded
 	if libname not in bge.logic.LibList():
+		time.sleep(2) # delay to prevent the BGE to crash if libraries are loaded to quick
+	if libname not in bge.logic.LibList():
 		print("module \"%s\": load item library: %s ..." % (__name__, repr(libname)))
-		bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
-		time.sleep(3) # delay to prevent the BGE to crash if libraries are loaded to quick
+		bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=False)
+		time.sleep(1)
 		#tools.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
 	scene = bge.logic.getCurrentScene()
 	obj = scene.addObject(rule[NAME], scene.active_camera)
@@ -76,7 +78,8 @@ def item_init(kx_object):
 
 items = [
 	# Each line is of type :
-	("disk",            "disk.blend",      just_spawn,      None),
+	("disk",            "disk2.blend",        just_spawn,      None),
+	("light baton",     "light-baton.blend",  just_spawn,      None),
 	# format :
 	# (itemname,          file to load,      function to call to spawn a new item,  function to initialize the new item (or None))
 ]
@@ -90,13 +93,14 @@ class item_initializer_thread(threading.Thread):
 		bge.logic.canstop -= 1
 
 
-def spawn_item(name, config):
+def spawn_item(name, config, async=True):
 	i = 0
 	while items[i][NAME] != name: i+=1
 	t = item_initializer_thread()
 	t.rule = items[i]
 	t.config = config
-	t.start()
+	if async: t.start()
+	else:     t.run()
 
  
 class Item(object):
