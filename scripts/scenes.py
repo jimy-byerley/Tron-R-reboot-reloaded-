@@ -64,8 +64,8 @@ scenes = [
 	# be carefull because scene dependencies of a dependency will also be loaded with its dependencies.
 	# coordinates (xyz)    file name             function to decide of loading    list of dependencies (other scenes)
 	((1000,0,0),    "small-arena-outside.blend",      on_distance(500),       ("system.blend",)),
-	((0,0,0),       "town-part-00.blend",             on_distance(50),        ("system.blend",)),
-	((50,0,0),      "town-part-01.blend",             on_distance(50),        ("system.blend",)),
+	((0,0,0),       "town-part-00.blend",             on_distance(100),        ("system.blend",)),
+	((50,0,0),      "town-part-01.blend",             on_distance(100),        ("system.blend",)),
 	((0,0,0),       "system.blend",                   None,                   ()),
 ]
 
@@ -106,7 +106,7 @@ def thread_loader():
 		libname = bge.logic.expandPath(bge.logic.scene_path+'/'+scenes[i][FILE])
 		if to_load[i] and (libname not in liblist) :
 			print("module \"%s\": load scene \"%s\" ..." % (__name__, libname))
-			bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
+			bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=False)
 			time.sleep(1)
 			#tools.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
 		

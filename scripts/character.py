@@ -130,6 +130,7 @@ class Skin(object) :
 			self.armature = add_skin(self.skin_name, self.box)
 		else:
 			self.armature = existing
+			oldclass = existing['class']
 		self.armature.setParent(self.box)
 		self.box["armature"] = self.armature
 		# recuperer les points d'attache pour les items
@@ -153,6 +154,10 @@ class Skin(object) :
 				self.body_helmet = child
 		self.updateRest()
 		self.toggleHelmet(False)
+		self.armature['class'] = self
+		if existing:
+			self.items = oldclass.items
+			self.handitem = oldclass.handitem
 		return self.armature
 
 

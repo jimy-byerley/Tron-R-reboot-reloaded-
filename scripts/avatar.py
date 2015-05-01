@@ -160,6 +160,9 @@ def init_noauto(game_config, player_dump) :
 	first_player.setCameraActive("tps")
 	first_player.setCameraActive("fps")
 
+def post_init():
+	first_player.updateItemOverlay()	
+
 
 
 def setup_overlay() :

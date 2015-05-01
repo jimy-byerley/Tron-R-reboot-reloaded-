@@ -92,4 +92,11 @@ else:
 	scenes.thread_loader()
 	backup_manager.thread_loader()
 	avatar.init_noauto(config, fp_dump)
-scene.addObject("root", scene.active_camera)
+
+root = scene.addObject("root", scene.active_camera)
+root['FXAA']         = config['filter_FXAA']
+root['bloom']        = config['filter_bloom']
+root['history_mode'] = config['filter_history_mode']
+root['field_depth']  = config['filter_field_depth']
+
+print('Game initialized')

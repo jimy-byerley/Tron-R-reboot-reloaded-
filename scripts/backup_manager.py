@@ -173,10 +173,11 @@ def dump_vehicle(kx_object):
 	return dump
 
 
-
 def dump_all(scenestodump=['Scene']):
 	""" Dumps the game state (items, vehicles, characters, ...) """
-	global last_backup, loaded
+	global last_backup, loaded, thread_loader_running
+	if thread_loader_running: return
+	thread_loader_running = True
 	
 	# remove old internal datas first
 	loaded = []
@@ -197,7 +198,7 @@ def dump_all(scenestodump=['Scene']):
 							#pprint.pprint(last_backup['characters'][i])
 							if last_backup['characters'][i]['id'] == dump['id']:
 								last_backup['characters'].pop(i)
-							i += 1
+							else: i += 1
 						last_backup['characters'].append(dump)
 					
 					elif dump == "vehicle":
@@ -213,17 +214,20 @@ def dump_all(scenestodump=['Scene']):
 							while i < len(last_backup['items']):
 								if last_backup['items'][i]['id'] == dump['id']:
 									last_backup['items'].pop(i)
-								i += 1
+								else: i += 1
 							last_backup['items'].append(dump)
 	
 	# remove last_backup IDs which are not in unloaded or in loaded objects
 	totalids = loaded+unloaded
 	for dataname in ('characters', 'vehicles', 'items', 'objects'):
-		for i in range(len(last_backup[dataname])):
+		i = 0
+		while i < len(last_backup[dataname]):
 			if last_backup[dataname][i]['id'] not in totalids:
 				last_backup[dataname].pop(i)
+			else: i += 1
 	
 	last_backup['max id'] = max_id
+	thread_loader_running = False
 
 def configure_object(obj, params):
 	""" Apply an object dump (dump_object()) to an existing object. """
@@ -265,7 +269,9 @@ def thread_loader():
 		camera = camera.parent
 	campos = camera.worldPosition
 	
+	thread_loader_running = False
 	dump_all()
+	thread_loader_running = True
 	
 	# only for loading because a loaded object can be away from to location saved (old backup)
 	for config in last_backup['characters']:
@@ -288,7 +294,7 @@ def thread_loader():
 					print('load item \"%s\" for character %s' % (itemconf['name'], config['name']))
 					itemconf['owner'] = new_char.box
 					itemconf['attach'] = attach
-					item.spawn_item(itemconf['name'], itemconf)
+					item.spawn_item(itemconf['name'], itemconf, async=False)
 					unloaded.pop(unloaded.index(itemconf['id']))
 				
 	
@@ -297,7 +303,7 @@ def thread_loader():
 		dist = sqrt((campos[0]-obpos[0])**2 + (campos[1]-obpos[1])**2 + (campos[2]-obpos[2])**2)
 		if dist < 50 and config['id'] in unloaded:
 			print('load item \"%s\" at coordinates %d, %d, %d' % (config['name'], config['pos'][0], config['pos'][1], config['pos'][2]))
-			item.spawn_item(config['name'], config)
+			item.spawn_item(config['name'], config, async=False)
 			unloaded.pop(unloaded.index(config['id']))
 	
 	# release the game
