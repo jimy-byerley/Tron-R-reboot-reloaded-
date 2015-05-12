@@ -22,7 +22,7 @@ while i < len(sys.argv):
 	i += 1
 
 # normaly the main scene is located in scenes directory
-game_path = bge.logic.expandPath('//..')
+game_path = bge.logic.expandPath('//../')
 bge.logic.game_path = game_path
 
 sys.path.append(game_path+'/scripts')
@@ -30,10 +30,13 @@ sys.path.append(game_path+'/mods')
 
 bge.logic.scene_path = game_path+'/scenes'
 bge.logic.models_path = game_path+'/models'
+bge.logic.sounds_path = game_path+'/sounds'
 
 import scenes
 import backup_manager
 import avatar
+import item
+import character
 
 ## load global configuration file ##
 
@@ -99,4 +102,7 @@ root['bloom']        = config['filter_bloom']
 root['history_mode'] = config['filter_history_mode']
 root['field_depth']  = config['filter_field_depth']
 
+scenes.load_async = True
+item.load_async = True
+character.load_async = True
 print('Game initialized')

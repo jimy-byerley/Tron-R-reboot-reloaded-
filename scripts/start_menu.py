@@ -54,7 +54,7 @@ def start_local():
 		f.close()
 		width = 1024
 		height = 600
-		command = '%s -w %d %d %s - -l %s' % (
+		command = '%s -w %d %d %s - -l %s -g ignore_deprecation_warnings = 0' % (
 			blenderplayer,
 			width, height,
 			bge.logic.expandPath('//main.blend'),

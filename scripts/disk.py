@@ -61,7 +61,7 @@ def update_activity() :
 	sound_deactivate = owner.actuators['deactivate']
 	
 	
-	if owner['class'].active == True:
+	if owner['active'] == True:
 		if owner['just activated'] :
 			cont.activate(sound_activate)
 			owner['just activated'] = False
@@ -83,7 +83,7 @@ def update_activity() :
 				orientation.z = acos(linV.x/sqrt(linV.x**2+linV.y**2))
 			owner.worldOrientation = orientation
 			# calcul de la distance au lanceur
-			vec = owner.worldPosition - owner['launcher'].worldPosition
+			vec = owner.worldPosition - owner['launcher'].worldPosition + Vector((0,0,1))
 			dist = sqrt(vec.x*vec.x + vec.y*vec.y + vec.z*vec.z)
 			if dist >= MAX_DISTANCE_LAUNCHER :
 				owner['class'].returnToLauncher()
@@ -96,7 +96,7 @@ def update_activity() :
 			hits = collision.hitObjectList
 			for hit in hits:
 				if "hp" in hit :
-					if hit != owner["launcher"] :
+					if hit != owner['class'].getOwnerObject() :
 						# evolved system with a class which represents the object
 						if "class" in hit : hit['class'].setHp(hit['hp']-1)
 						# basic object with blender logic brics
@@ -124,24 +124,24 @@ class IDDisc(Item):
 	
 	def init(self):
 		Item.init(self)
-		if self.object['lame'].localScale.x >= 1 :
-			self.active = True
-		else:
-			self.active = False
 		self.object['just activated'] = False
 		self.object['just deactivated'] = False
 		self.object['just launched'] = False
 		self.object['launcher'] = None
-		self.object['flying'] = False
 	
 	def action1(self):
 		character = self.getOwner()
 		if time.time() > self.disc_activate_date :
 			self.disc_activate_date = time.time()+0.6
-			if self.active :
+			if self.object['active'] :
 				self.setActive(False)
 			else : 
 				self.setActive(True)
+		for mesh in self.object.meshes:
+			for mat in mesh.materials:
+				print(mat.shader.getFragmentProg())
+				print(mat.shader.getVertexProg())
+
 
 	def action2(self):
 		if self.launching : return
@@ -161,11 +161,11 @@ class IDDisc(Item):
 			self.object.worldOrientation = orientation
 			self.object.localLinearVelocity = Euler((0,37,0))
 			
-			if self.active :
+			if self.object['active'] :
+				self.object['launcher'] = box
 				self.object["flying"] = True
 				self.object['just launched'] = True
 			self.launching = False
-			#print('end of action2')
 			
 		thread = threading.Thread()
 		thread.run = detach
@@ -201,7 +201,7 @@ class IDDisc(Item):
 			self.object['lame'].localScale = (1.34, 1.34, 1)
 			self.object['lame'].visible = True
 			# setup biking with disk position
-			if character.vehicle and character.vehicle.name == "light-cycle":
+			if character and character.vehicle and character.vehicle.name == "light-cycle":
 				keys = character.skin.animations.keys()
 				if "biking with disk" in keys and "biking take disk" in keys :
 					loop = character.skin.animations['biking with disk']
@@ -209,12 +209,12 @@ class IDDisc(Item):
 					character.skin.armature.playAction(loop[0], loop[2], loop[3], layer=0, play_mode=KX_ACTION_MODE_LOOP) # from light_baton.py
 					character.skin.armature.playAction(take[0], take[3], take[4], layer=2, layer_weight=0)
 		else :
-			if self.active: self.object['just deactivated'] = True
+			if self.object['active']: self.object['just deactivated'] = True
 			self.object.linVelocityMin = 0
 			self.object.linVelocityMax = 0
 			self.object['lame'].visible = False
 			# setup biking with disk position
-			if character.vehicle and character.vehicle.name == "light-cycle":
+			if character and character.vehicle and character.vehicle.name == "light-cycle":
 				keys = character.skin.animations.keys()
 				if "biking with disk" in keys and "biking take disk" in keys :
 					loop = character.skin.animations['biking with disk']
@@ -222,7 +222,7 @@ class IDDisc(Item):
 					character.skin.armature.playAction(loop[0], loop[4], loop[4], layer=0, play_mode=KX_ACTION_MODE_LOOP)
 					character.skin.armature.playAction(take[0], take[3], take[4], layer=2, layer_weight=0)
 					
-		self.active = active
+		self.object['active'] = active
 
 	
 	

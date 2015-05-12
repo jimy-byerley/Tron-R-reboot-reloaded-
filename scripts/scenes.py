@@ -23,6 +23,11 @@ import math
 import threading
 import tools
 
+
+# to set True after game initialized
+load_async = False
+
+
 scene_thread_loop_duration = 5  # (seconds) Set a smaller value if you want the loading and unloading of the scenes to be faster
 distance_factor = 1. # change this factory to change the global distances to load the scenes, (if you have a bad computer)
 scene_thread_stop = False
@@ -106,7 +111,8 @@ def thread_loader():
 		libname = bge.logic.expandPath(bge.logic.scene_path+'/'+scenes[i][FILE])
 		if to_load[i] and (libname not in liblist) :
 			print("module \"%s\": load scene \"%s\" ..." % (__name__, libname))
-			bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=False)
+			bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=load_async)
+			if load_async: time.sleep(2)
 			time.sleep(1)
 			#tools.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
 		

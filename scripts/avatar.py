@@ -354,5 +354,6 @@ def update_skybox() :
 	owner = cont.owner
 	owner.worldPosition = first_player.box.worldPosition
 
-def update_bloom_fac(cont) :
-	cont.owner['bloom_fac'] = 1.9/Rasterizer.getWindowWidth()
+def update_bloom_fac() :
+	scene = bge.logic.getCurrentScene()
+	scene.objects['root']['bloom_fac'] = 1.9/Rasterizer.getWindowWidth()

@@ -25,6 +25,10 @@ import backup_manager
 import tools
 
 
+# to set True after game initialized
+load_async = False
+
+
 # indexes for 'items' list.
 NAME = 0
 FILE = 1
@@ -44,11 +48,12 @@ def just_spawn(rule, params):
 	
 	# load library file if it is not loaded
 	if libname not in bge.logic.LibList():
-		time.sleep(2) # delay to prevent the BGE to crash if libraries are loaded to quick
+		time.sleep(0.5) # delay to prevent the BGE to crash if libraries are loaded to quick
 	if libname not in bge.logic.LibList():
 		print("module \"%s\": load item library: %s ..." % (__name__, repr(libname)))
-		bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=False)
-		time.sleep(1)
+		bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=load_async)
+		if load_async: time.sleep(2)
+		time.sleep(0.5)
 		#tools.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
 	scene = bge.logic.getCurrentScene()
 	obj = scene.addObject(rule[NAME], scene.active_camera)
@@ -57,6 +62,23 @@ def just_spawn(rule, params):
 	
 	return obj
 
+def load_meshlib(rule, params):
+	"""Function to load a mesh library before object library, the library should have the same name with "-mesh" added before .blend"""
+	groups = rule[FILE].split('.')
+	groups[-2] += '-meshes'
+	filename = '.'.join(groups)
+	libname = bge.logic.expandPath(bge.logic.models_path+'/'+filename)
+	
+	# load library file if it is not loaded
+	if libname not in bge.logic.LibList():
+		time.sleep(0.5) # delay to prevent the BGE to crash if libraries are loaded to quick
+	if libname not in bge.logic.LibList():
+		print("module \"%s\": load item mesh library: %s ..." % (__name__, repr(libname)))
+		bge.logic.LibLoad(libname, "Mesh", load_actions=True, load_scripts=True, async=load_async)
+		if load_async: time.sleep(2)
+		time.sleep(0.5)
+	return True
+	
 
 def item_init_module():
 	"""
@@ -79,7 +101,7 @@ def item_init(kx_object):
 items = [
 	# Each line is of type :
 	("disk",            "disk2.blend",        just_spawn,      None),
-	("light baton",     "light-baton.blend",  just_spawn,      None),
+	("light baton",     "light-baton.blend",  lambda r,p : load_meshlib(r,p) and just_spawn(r,p),      None),
 	# format :
 	# (itemname,          file to load,      function to call to spawn a new item,  function to initialize the new item (or None))
 ]
@@ -121,10 +143,14 @@ class Item(object):
 		self.bodybone = bodybone
 		
 	def getOwner(self):
-		return self.object.parent.parent.parent["class"]
+		if self.object.parent and self.object.parent.parent and self.object.parent.parent.parent:
+			return self.object.parent.parent.parent["class"]
+		return None
 		
 	def getOwnerObject(self):
-		return self.object.parent.parent.parent
+		if self.object.parent and self.object.parent.parent:
+			return self.object.parent.parent.parent
+		return None
 	
 	def changeColor(self, color):
 		# change la couleur de l'item

@@ -55,7 +55,7 @@ class LightBaton(Item):
 		if self.activate_date+0.5 > time.time() : return
 		if self.cycle :
 			# play sound
-			path = bge.logic.expandPath('//lib/light-baton/cycle-stop.wav')
+			path = bge.logic.sounds_path+'/light-vehicles/cycle-stop.wav'
 			sound = aud.Factory.file(path)
 			dev = aud.device()
 			cam = bge.logic.getCurrentScene().active_camera
@@ -68,7 +68,7 @@ class LightBaton(Item):
 			self.cycle = None
 		else :
 			# play sound
-			path = bge.logic.expandPath('//lib/light-baton/cycle-start.wav')
+			path = bge.logic.sounds_path+'/light-vehicles/cycle-start.wav'
 			sound = aud.Factory.file(path)
 			dev = aud.device()
 			cam = bge.logic.getCurrentScene().active_camera

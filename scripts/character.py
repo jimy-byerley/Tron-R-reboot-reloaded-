@@ -28,6 +28,11 @@ import threading
 import special_characters
 import tools
 
+
+# to set True after game initialized
+load_async = False
+
+
 # fonctions utilisées par les classes
 
 def add_special_skin(name, ref) :
@@ -46,7 +51,8 @@ def add_special_skin(name, ref) :
 	# load if not
 	if skin_file not in bge.logic.LibList():
 		print("module \"%s\": loading skin model \"%s\"" % (__name__, skin_file,))
-		s = bge.logic.LibLoad(skin_file, "Scene", load_actions=True, async=False)
+		s = bge.logic.LibLoad(skin_file, "Scene", load_actions=True, async=load_async)
+		if load_async: time.sleep(2)
 		time.sleep(1)
 		#tools.LibLoad(skin_file, "Scene", load_actions=True, async=False)
 	# add to scene
@@ -264,7 +270,10 @@ class Skin(object) :
 		lache l'objet tenu en main
 		"""
 		if self.handitem :
+			item = self.handitem
 			self.detach("hand")
+			if item['class']:
+				item['class'].droped()
 
 			
 	def attach(self, item, attach="hand") :
@@ -572,8 +581,21 @@ class Character(object) :
 			if "jump sensor" in child and child["jump sensor"] :
 				self.jump_sensor = child
 			# camera head
-			if "camera head" in child and child["camera head"] :
+			elif "camera head" in child and child["camera head"] :
 				self.camera_head = child
+			elif "top right"   in child: self.sens_top_right    = child.sensors[0]
+			elif "right"       in child: self.sens_right        = child.sensors[0]
+			elif "floor right" in child: self.sens_flooar_right = child.sensors[0]
+			elif "top left"    in child: self.sens_top_left     = child.sensors[0]
+			elif "left"        in child: self.sens_left         = child.sensors[0]
+			elif "floor left"  in child: self.sens_flooar_left  = child.sensors[0]
+			elif "top back"    in child: self.sens_top_left     = child.sensors[0]
+			elif "back"        in child: self.sens_left         = child.sensors[0]
+			elif "floor back"  in child: self.sens_flooar_left  = child.sensors[0]
+			elif "top front"   in child: self.sens_top_right    = child.sensors[0]
+			elif "front"       in child: self.sens_right        = child.sensors[0]
+			elif "floor right" in child: self.sens_flooar_right = child.sensors[0]
+			
 		# index cameras, ...
 		for child in self.camera_head.children :
 			if "camera TPS" in child and child["camera TPS"] :

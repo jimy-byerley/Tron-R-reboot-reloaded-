@@ -33,7 +33,7 @@ animations = {
 		"catch disk" : ('clu item', 257, 257, 270, 270),
 		"take disk" : ('clu item', 60, 64, 66, 74),
 		# light-baton and cycle actions
-		"take light-baton" : ('clu item', 241, 249, 249, 253),
+		"take light baton" : ('clu item', 241, 249, 249, 253),
 		"set cycle" : ('clu move', 216, 220, 224, 228), # départ, dabut de saut, prise 2 mains, position de conduite
 		"biking with disk" : ('clu move', 239, 243, 243, 247),
 		"biking take disk" : ('clu item', 276, 278, 278, 280),
@@ -54,7 +54,7 @@ animations = {
 		"launch disk" : ('monitor item', 50, 56, 57, 61),
 		"catch disk" : ('monitor item', 70, 73, 77, 81),
 		# light-baton and cycle actions
-		"take light-baton" : ('monitor item', 20, 25, 27, 30),
+		"take light baton" : ('monitor item', 20, 25, 27, 30),
 		"set cycle" : ('monitor move', 117, 119, 129, 135),
 		"biking with disk" : ('monitor move', 150, 155, 155, 160),
 		"biking take disk" : ('monitor item', 35, 39, 39, 44),
