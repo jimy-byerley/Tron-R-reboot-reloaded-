@@ -9,17 +9,17 @@ based on Tron. This game is based on Tron Legacy and Stand for replace the propr
 made after the film.
 
 - several skins
-![skin monitor](screenshots/skin-monitor.png) ![skin clu](screenshots/skin-clu.png)
+![skin rinzler](screenshots/rinzler-back.png) ![skin tron](screenshots/tron-side.png)
+![skin clu](screenshots/clu-side.png) ![skin monitor](screenshots/monitor-back.png)
 - open-world 
 ![street](screenshots/street.png) ![city](screenshots/city.png)
 - items
-![disk](screenshots/disk.png) ![items](screenshots/items.png)
 - better
-![cycle](screenshots/cycle_on_grid.png) ![flynn](screenshots/flynn_in_street.png)
+![cycle](screenshots/cycle_on_grid.png)
 
 suggestions: jimy.byerley@gmail.com
 
-
+Facebook page: m.facebook.com/profile.php?id=631385166999031
 
 #### PLAY
 
@@ -58,5 +58,6 @@ Launch it!
 
 OS platform: Linux (tested), Windows, but mabe maxOS should work too.
 Blender :  version >= 2.70  (made with blender 2.72)
+(Blender 2.72 is recomended because newer versions are crashing)
 
 bugs: jimy.byerley@gmail.com
