@@ -239,7 +239,7 @@ def configure_object(obj, params):
 	if 'properties' in params:
 		properties = params['properties']
 		for prop in properties:
-			if prop not in obj : obj[prop] = properties[prop]
+			obj[prop] = properties[prop]
 	
 	if 'repr' in params and 'class' not in obj :
 		try:	item_def = eval(params['repr'])
