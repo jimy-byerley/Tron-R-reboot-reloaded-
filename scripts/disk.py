@@ -47,6 +47,7 @@ def item_init():
 
 	owner['class'] = IDDisc(owner, owner["itemname"], owner["hand"], owner["attach"])
 	owner['class'].init()
+		
 
 
 def update_activity() :
@@ -92,6 +93,7 @@ def update_activity() :
 			collision.reset()
 			owner['class'].hittimes += 1
 			if owner['class'].hittimes >= 3:
+				owner['class'].hittimes = 0
 				owner['class'].returnToLauncher()
 			hits = collision.hitObjectList
 			for hit in hits:
@@ -128,6 +130,11 @@ class IDDisc(Item):
 		self.object['just deactivated'] = False
 		self.object['just launched'] = False
 		self.object['launcher'] = None
+		if "color" in self.object:
+			self.changeColor(self.object['color'])
+	
+	def changeHolderColor(self, color):
+		pass
 	
 	def action1(self):
 		character = self.getOwner()
@@ -137,10 +144,6 @@ class IDDisc(Item):
 				self.setActive(False)
 			else : 
 				self.setActive(True)
-		for mesh in self.object.meshes:
-			for mat in mesh.materials:
-				print(mat.shader.getFragmentProg())
-				print(mat.shader.getVertexProg())
 
 
 	def action2(self):
@@ -154,7 +157,8 @@ class IDDisc(Item):
 		def detach():
 			while int(armature.getActionFrame(2)) < anim[2]:
 				time.sleep(0.05)
-			box["class"].drop()
+			#box["class"].drop()
+			box["class"].skin.detach("hand")
 			
 			wo = box["class"].camera_head.worldOrientation.to_euler()
 			orientation = Euler((-wo.y, wo.x, wo.z -pi/2))
@@ -172,7 +176,6 @@ class IDDisc(Item):
 		thread.start()
 
 	def taken(self):
-		Item.taken(self)
 		self.object["launcher"] = self.object.parent.parent.parent # 3 niveaux : empty, armature, box
 		self.hittimes = 0
 		self.disc_activate_date = time.time()+0.5
@@ -232,6 +235,3 @@ class IDDisc(Item):
 		vec.normalize()
 		self.object.worldLinearVelocity = vec
 
-
-
-items.append(('disk',    'disk.blend',    just_spawn,   None))
