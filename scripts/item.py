@@ -95,12 +95,12 @@ def item_init(kx_object):
 	kx_object['class'].init()
 
 
-###############################################################################
-### ITEMS DECLARATIONS (to do dynamicaly from item script file if there is) ###
+##########################
+### ITEMS DECLARATIONS ###
 
 items = [
 	# Each line is of type :
-	("disk",            "disk2.blend",        just_spawn,      None),
+	("disk",            "disk.blend",         lambda r,p : load_meshlib(r,p) and just_spawn(r,p),      None),
 	("light baton",     "light-baton.blend",  lambda r,p : load_meshlib(r,p) and just_spawn(r,p),      None),
 	# format :
 	# (itemname,          file to load,      function to call to spawn a new item,  function to initialize the new item (or None))

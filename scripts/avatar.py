@@ -48,6 +48,7 @@ class Avatar(character.Character) :
 	def setHp(self, hp) :
 		if not self.overlay : self.overlay = bge.logic.getSceneList()[1]
 		character.Character.setHp(self, hp)
+		"""
 		if hp <= 0 :
 			hp = 0
 			bge.logic.getCurrentScene().suspend()
@@ -58,6 +59,7 @@ class Avatar(character.Character) :
 			bge.logic.setExitKey(bge.events.ENTERKEY)
 		self.box["hp"] = hp
 		self.overlay.objects["hp progress bar"].localScale.x = hp
+		"""
 
 	def updateItemOverlay(self) :
 		if not self.overlay : self.overlay = bge.logic.getSceneList()[1]
