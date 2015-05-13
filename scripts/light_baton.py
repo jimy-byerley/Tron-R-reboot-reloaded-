@@ -46,6 +46,11 @@ class LightBaton(Item):
 		'white' : 'cycle body white',
 		'green' : 'cycle body green',
 		}
+	
+	def init(self):
+		Item.init(self)
+		if "color" in self.object:
+			self.changeColor(self.object['color'])
 
 	def taken(self):
 		Item.taken(self)
@@ -61,7 +66,7 @@ class LightBaton(Item):
 			cam = bge.logic.getCurrentScene().active_camera
 			vec = self.getOwnerObject().worldPosition - cam.worldPosition
 			dev.listener_location = vec
-			dev.volume = 0.8
+			dev.volume = 0.6
 			dev.play(sound)
 			
 			self.cycle['class'].remove()
@@ -74,7 +79,7 @@ class LightBaton(Item):
 			cam = bge.logic.getCurrentScene().active_camera
 			vec = self.getOwnerObject().worldPosition - cam.worldPosition
 			dev.listener_location = vec
-			dev.volume = 0.7
+			dev.volume = 0.6
 			dev.play(sound)
 			
 			# spawn the cycle
