@@ -52,6 +52,8 @@ Launch it!
 	Windows:
 	Execute Tron-R.bat executable file
 
+To change game settings, edit config.txt file
+
 
 
 #### COMPATIBILITY

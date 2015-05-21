@@ -71,6 +71,7 @@ scenes = [
 	((1000,0,0),    "small-arena-outside.blend",      on_distance(500),       ("system.blend",)),
 	((0,0,0),       "town-part-00.blend",             on_distance(100),        ("system.blend",)),
 	((50,0,0),      "town-part-01.blend",             on_distance(100),        ("system.blend",)),
+	((80,-100,0),   "town-part-02.blend",             on_distance(100),        ("system.blend",)),
 	((0,0,0),       "system.blend",                   None,                   ()),
 ]
 
