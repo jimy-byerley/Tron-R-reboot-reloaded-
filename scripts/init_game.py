@@ -6,7 +6,7 @@ config_file = None
 game_file = None
 
 i = 0
-while sys.argv[i] != '-' : i += 1
+while sys.argv[i] != '-' and i < len(sys.argv) : i += 1
 i += 1
 while i < len(sys.argv):
 	arg = sys.argv[i]
