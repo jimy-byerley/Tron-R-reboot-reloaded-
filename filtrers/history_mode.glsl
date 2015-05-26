@@ -17,11 +17,6 @@ vec4 uncontrast( in vec4 value )
 
 void main(void)
 {
-    /*
-	vec4 pix = texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + vec2(0.5, 0.02));
-    vec4 value = texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
-	gl_FragColor = min(vec4(1), value + pow(pix,3));
-    */
     // RGB diffraction
     vec2 basecoord = (gl_TexCoord[0].st-vec2(0.5)) * vec2(0.7,1);
 	float red = uncontrast(texture2D(bgl_RenderedTexture, basecoord + vec2(0.497))).x;

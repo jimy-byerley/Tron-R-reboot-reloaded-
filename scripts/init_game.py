@@ -101,6 +101,7 @@ root['FXAA']         = config['filter_FXAA']
 root['bloom']        = config['filter_bloom']
 root['history_mode'] = config['filter_history_mode']
 root['field_depth']  = config['filter_field_depth']
+root['field_SSAO']   = config['filter_SSAO']
 
 scenes.load_async = True
 item.load_async = True
