@@ -54,6 +54,7 @@ class LightBaton(Item):
 
 	def taken(self):
 		Item.taken(self)
+		self.changeColor(self.getOwner().getColor())
 		self.activate_date = time.time()
 	
 	def action1(self):
@@ -99,14 +100,14 @@ class LightBaton(Item):
 				
 				color = self.object['color']
 				if color in self.cyclecolors : 
-					self.cycle['class'].armature.replaceMesh(self.cyclecolors[color])
+					#self.cycle['class'].armature.replaceMesh(self.cyclecolors[color])
 					for child in self.cycle['class'].armature.children:
 						if 'body' in child:
 							#print(child.meshes)
 							child.replaceMesh(self.cyclecolors[color])
 							#child.update()
 							#print(child.meshes)
-					self.cycle['class'].armature.update()
+					#self.cycle['class'].armature.update()
 
 			thread = threading.Thread()
 			thread.run = t

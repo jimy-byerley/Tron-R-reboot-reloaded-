@@ -89,7 +89,7 @@ if game_file:
 if fp_dump == None :
 	spawner = scene.addObject("first player spawn", scene.active_camera)
 	spawner['character_name'] = config['nickname']
-	spawner['skin'] = config['skin']	
+	spawner['skin'] = config['skin']
 else:
 	scene.active_camera.worldPosition = fp_dump['pos']
 	scenes.thread_loader()

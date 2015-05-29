@@ -181,7 +181,6 @@ class Item(object):
 		pass
 	
 	def taken(self):
-		self.changeColor(self.getOwner().getColor())
 		pass
 	
 	def droped(self):
