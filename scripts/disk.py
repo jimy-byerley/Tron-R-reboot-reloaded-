@@ -231,7 +231,7 @@ class IDDisc(Item):
 	
 	def returnToLauncher(self):
 		if not self.object['launcher']: return
-		vec = self.object['launcher'].worldPosition + Vector((0,0,1.2)) - self.object.worldPosition
+		vec = self.object['launcher'].worldPosition - self.object.worldPosition + Vector((0,0,1.2))
 		vec.normalize()
 		self.object.worldLinearVelocity = vec
 
