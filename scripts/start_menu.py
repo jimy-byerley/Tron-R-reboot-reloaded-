@@ -6,6 +6,29 @@ from math import *
 import os
 import sys
 
+def read_config():
+	## load global configuration file ##
+	try: f = open(bge.logic.expandPath("//../config.txt"), 'r')
+	except IOError:
+		print('config.txt not found, use default values instead.')
+		return {}
+	else:
+		lines = f.readlines()
+		f.close()
+		config = {}
+		for line in lines:
+			line = line.expandtabs()
+			name = ""
+			value = ""
+			i = 0
+			while line[i] != ' ':	i += 1
+			name = line[:i]
+			j = i
+			while line[i] == ' ':	i += 1
+			while line[j] != '\n':	j += 1
+			value = line[i:j]
+			config[name] = eval(value)
+		return config
 
 bge.render.showMouse(True)
 
@@ -48,13 +71,16 @@ def mouse_over_item(cont):
 
 def start_local():
 	print('platform detected:', sys.platform)
+	config = read_config()
+	width = 1280
+	if 'window_width' in config:  width = config['window_width']
+	height = 800
+	if 'window_height' in config : height = config['window_height']
 	if sys.platform in ('linux', 'linux2'):
 		f = open(bge.logic.expandPath('//../blenderplayer_path.txt'), 'r')
 		blenderplayer = f.read()[:-1] +'/blenderplayer'
 		f.close()
-		width = 1024
-		height = 600
-		command = '%s -w %d %d %s - -l %s -g ignore_deprecation_warnings = 0' % (
+		command = '%s -w %d %d %s - -l %s' % (
 			blenderplayer,
 			width, height,
 			bge.logic.expandPath('//main.blend'),
@@ -66,8 +92,6 @@ def start_local():
 		f = open(bge.logic.expandPath('//..\\blenderplayer_path.txt'), 'r')
 		blenderplayer = f.read()[:-1] +'\\blenderplayer'
 		f.close()
-		width = 1024
-		height = 600
 		command = '%s -w %d %d %s - -l %s' % (
 			blenderplayer,
 			width, height,

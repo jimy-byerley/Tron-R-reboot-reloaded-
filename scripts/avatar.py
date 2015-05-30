@@ -66,7 +66,7 @@ class Avatar(character.Character) :
 
 		empty_scale = 0.8
 		full_scale = 1
-		empty_hand_scale = 1.4
+		empty_hand_scale = 0.5
 		full_hand_scale = 1.8
 		
 		# inventory
