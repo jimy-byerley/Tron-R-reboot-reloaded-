@@ -44,6 +44,7 @@ class Avatar(character.Character) :
 			if scene.name == "overlay" :
 				self.overlay = scene
 		self.box["first player"] = True
+		scene.addObject("skybox", ref)
 
 	def setHp(self, hp) :
 		if not self.overlay : self.overlay = bge.logic.getSceneList()[1]
@@ -351,10 +352,8 @@ def mouse_input() :
 
 
 
-def update_skybox() :
-	cont = bge.logic.getCurrentController()
-	owner = cont.owner
-	owner.worldPosition = first_player.box.worldPosition
+def skybox_update(cont) :
+	cont.owner.worldPosition = first_player.box.worldPosition
 
 def update_bloom_fac() :
 	scene = bge.logic.getCurrentScene()
