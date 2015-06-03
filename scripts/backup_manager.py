@@ -216,6 +216,17 @@ def dump_all(scenestodump=['Scene']):
 									last_backup['items'].pop(i)
 								else: i += 1
 							last_backup['items'].append(dump)
+					
+					elif dump == "object":
+						dump = dump_object(obj)
+						dump['name'] = obj.name
+						loaded.append(dump['id'])
+						i = 0
+						while i < len(last_backup['objects']):
+							if last_backup['objects'][i]['id'] == dump['id']:
+								last_backup['objects'].pop(i)
+							else: i += 1
+						last_backup['objects'].append(dump)
 	
 	# remove last_backup IDs which are not in unloaded or in loaded objects
 	totalids = loaded+unloaded
@@ -273,7 +284,7 @@ def thread_loader():
 	dump_all()
 	thread_loader_running = True
 	
-	# only for loading because a loaded object can be away from to location saved (old backup)
+
 	for config in last_backup['characters']:
 		obpos = config['pos']
 		dist = sqrt((campos[0]-obpos[0])**2 + (campos[1]-obpos[1])**2 + (campos[2]-obpos[2])**2)
@@ -304,6 +315,11 @@ def thread_loader():
 		if dist < 50 and config['id'] in unloaded:
 			print('load item \"%s\" at coordinates %d, %d, %d' % (config['name'], config['pos'][0], config['pos'][1], config['pos'][2]))
 			item.spawn_item(config['name'], config, async=False)
+			unloaded.pop(unloaded.index(config['id']))
+	
+	for config in last_backup['objects']:
+		if config['name'] in scene.objects and config['id'] in unloaded:
+			configure_object(scene.objects[config['name']], config)
 			unloaded.pop(unloaded.index(config['id']))
 	
 	# release the game
@@ -341,7 +357,7 @@ def _loader_thread():
 			for i in range(len(last_backup[dataname])):
 				id = last_backup[dataname][i]['id']
 				if id not in loaded and id not in unloaded:
-					unloaded.append(last_backup[dataname][i]['id'])
+					unloaded.append(id)
 			for character in last_backup['characters']:
 				for item in character['inventory'].values():
 					if (item != None) and (item[0] not in loaded) and (item[0] not in unloaded):
