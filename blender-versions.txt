@@ -1,0 +1,5 @@
+2.72	recommended
+2.73	crash at launch
+2.74	crash at launch
+2.75 rc1	crash at launch
+2.75 rc2	works (some FPS less than 2.72)
