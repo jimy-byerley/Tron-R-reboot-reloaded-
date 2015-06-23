@@ -3,7 +3,7 @@ uniform float bloom_fac;
 
 vec4 contrast( in vec4 value )
 {
-	float fac = 0.8;
+	float fac = 1.;
 	//float med = (value.x+value.y+value.z)/3;
 	//vec4 result = (value - vec4(med)*0.8)*3;
 	
