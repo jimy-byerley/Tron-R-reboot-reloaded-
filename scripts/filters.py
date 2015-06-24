@@ -1,9 +1,10 @@
 import bge
+import Rasterizer
 
-FILTER_SHORT_NAME = 0
-FILTER_FILE       = 1
-FILTER_LONG_NAME  = 2
-FILTER_DESC       = 3
+FILTER_SHORTNAME = 0
+FILTER_FILE      = 1
+FILTER_LONGNAME  = 2
+FILTER_DESC      = 3
 
 # list of existing 2D filters, ordered by pass order on the GPU
 # each item is of type:     short name,  file,  long name,  description
@@ -28,40 +29,65 @@ At contrary of other field depth effects, objects that have not the focus appear
 	("field depth (ring)", "field_depth_ring.glsl", "glow background and foreground",
 	           "Objects that have not the focus will be glowed, as if there was a true camera, with optics.\
 At contrary of other field depth effects, objects that have not the focus appears as rings (no light inside, circle of light)."),
+	
+	("history mode", "history_mode.glsl", "warp border of screen",
+	           "History mode is as the flashback in tron legacy: It warp image on the sides of the screen and difract the colors."),
 ]
 
-# list of filters enabled (short names)
-enabled = []
+enabled = []    # list of filters enabled (short names)
 
-# add a filter for the GPU render, filter is specified by its name in 'filters' list.
-# only one filter can be set or removed per logic step
+# add filter names to theses lists to enable/disable it. One filter only will be applied by logic step and removed from this list.
+# filters to disable would be treated first.
+to_enable = []  # list of filters to enable (will automaticaly enable, 1 per logic step)
+to_disable = [] # list of filters to disable (will automaticaly disable, 1 per logic step)
+
 def enable_filter(name):
-	for i in range(len(filters)):
-		if filters[i][FILTER_SHORTNAME] == name:
-			filter_code = ""
-			try: f = open(bge.logic.filters_path+'/'+filters[i][FILTER_FILE], 'ro')
-			except OSError: 
-				print('failed to set 2D filter \'%s\'' % filters[i][FILTER_SHORTNAME])
-				return False
-			else:
-				filter_code = f.read()
-				f.close()
-			actuator = bge.logic.root.actuators['2Dfilter']
-			actuator.mode = bge.logic.RAS_2DFILTER_CUSTOMFILTER
-			actuator.shaderText = filter_code
-			actuator.passNumber = i
-			bge.logic.root['set_filter'] = True
-			return True
-	return False
+	global to_enable
+	to_enable.append(name)
+	bge.logic.root['set_filter'] = True
 
-# remove a filter for the GPU render, filter is specified by its name in 'filters' list.
-# only one filter can be set or removed per logic step
 def disable_filter(name):
-	for i in range(len(filters)):
-		if filters[i][FILTER_SHORTNAME] == name:
-			actuator = bge.logic.root.actuators['2Dfilter']
-			actuator.mode = bge.logic.RAS_2DFILTER_DISABLED
-			actuator.shaderText = ""
-			actuator.passNumber = i
-			bge.logic.root['set_filter'] = True
-			return
+	global to_disable
+	to_disable.append(name)
+	bge.logic.root['set_filter'] = True
+
+
+def callback_update(cont):
+	owner = cont.owner
+	# disable first to avoid overload of the GPU during the steps filters are changed.
+	if to_disable:
+		name = to_enable.pop(0)
+		for i in range(len(filters)):
+			if filters[i][FILTER_SHORTNAME] == name:
+				print('module \"%s\": disable filter \'%s\'.' % (__name__, name))
+				actuator = cont.actuators[0]
+				actuator.mode = bge.logic.RAS_2DFILTER_DISABLED
+				actuator.shaderText = ""
+				actuator.passNumber = i
+				cont.activate(actuator)
+				break
+	elif to_enable:
+		name = to_enable.pop(0)
+		for i in range(len(filters)):
+			if filters[i][FILTER_SHORTNAME] == name:
+				print('module \"%s\": enable filter \'%s\'.' % (__name__, name))
+				filter_code = ""
+				try: f = open(bge.logic.filters_path+'/'+filters[i][FILTER_FILE], 'r')
+				except OSError: 
+					print('module \"%s\": failed to set 2D filter \'%s\' (unable to open file \'%s\').' % (__name__, filters[i][name], bge.logic.filters_path+'/'+filters[i][FILTER_FILE]))
+					return False
+				else:
+					filter_code = f.read()
+					f.close()
+				actuator = cont.actuators[0]
+				actuator.mode = bge.logic.RAS_2DFILTER_CUSTOMFILTER
+				actuator.shaderText = filter_code
+				actuator.passNumber = i
+				cont.activate(actuator)
+				break
+	else:
+		owner['set_filter'] = False
+
+
+def update_bloom_fac() :
+	bge.logic.root['bloom_fac'] = 1.9/Rasterizer.getWindowWidth()
