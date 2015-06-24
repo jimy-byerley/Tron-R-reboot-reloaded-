@@ -25,19 +25,21 @@ while i < len(sys.argv):
 game_path = bge.logic.expandPath('//../')
 bge.logic.game_path = game_path
 
-sys.path.append(game_path+'/scripts')
-sys.path.append(game_path+'/mods')
+sys.path.append(game_path+'scripts')
+sys.path.append(game_path+'mods')
 
-bge.logic.scene_path = game_path+'/scenes'
-bge.logic.models_path = game_path+'/models'
-bge.logic.sounds_path = game_path+'/sounds'
-bge.logic.filters_path = game_path+'/filters'
+bge.logic.scene_path = game_path+'scenes'
+bge.logic.models_path = game_path+'models'
+bge.logic.sounds_path = game_path+'sounds'
+bge.logic.filters_path = game_path+'filters'
 
 import scenes
 import backup_manager
 import avatar
 import item
 import character
+import filters
+
 
 ## load global configuration file ##
 
@@ -97,14 +99,22 @@ else:
 	backup_manager.thread_loader()
 	avatar.init_noauto(config, fp_dump)
 
+## the game could be started ##
 root = scene.addObject("root", scene.active_camera)
-root['FXAA']         = config['filter_FXAA']
-root['bloom']        = config['filter_bloom']
-root['history_mode'] = config['filter_history_mode']
-root['field_depth']  = config['filter_field_depth']
-root['field_SSAO']   = config['filter_SSAO']
+bge.logic.root = root
+bge.logic.bootloader = bge.logic.getCurrentController().owner
 
+# setup 2D filters
+for key in config.keys():
+    if len(key)>7 and key[:7] == 'filter_' and config[key]:
+        for filter in filters.filters:
+            if filter[filters.FILTER_FILE].split('.')[0] == key[7:]:
+                filters.enable_filter(filter[filters.FILTER_SHORTNAME])
+                break
+
+# setup dynamic loading
 scenes.load_async = True
 item.load_async = True
 character.load_async = True
+
 print('Game initialized')
