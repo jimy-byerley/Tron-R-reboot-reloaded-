@@ -1,8 +1,8 @@
 nickname      "aron"
 skin          "monitor"
 object_id     0
-window_width          1440
-window_height         1024
+window_width          1024
+window_height         600
 filter_bloom          True
 filter_FXAA           True
 filter_history_mode   True
