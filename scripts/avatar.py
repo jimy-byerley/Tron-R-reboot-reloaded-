@@ -354,7 +354,3 @@ def mouse_input() :
 
 def skybox_update(cont) :
 	cont.owner.worldPosition = first_player.box.worldPosition
-
-def update_bloom_fac() :
-	scene = bge.logic.getCurrentScene()
-	scene.objects['root']['bloom_fac'] = 1.9/Rasterizer.getWindowWidth()
