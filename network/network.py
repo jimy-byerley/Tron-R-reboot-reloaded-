@@ -14,6 +14,7 @@ def username_conformity_off(s) :
 	return True
 
 
+
 PACKET_STOP    = b"quitting"
 
 class obdata:
@@ -21,6 +22,8 @@ class obdata:
 	This class represents an object for the server (most common attributes are pre-defined for optimisation)
 	"""
 	host = 0               # maximal index of host who can provide information about this object
+	updated = False        # marker for 'updated during last cycle'
+	
 	position = False
 	rotation = False
 	parent = False
@@ -30,6 +33,15 @@ class obdata:
 	
 	def __repr__(self):
 		return '{pos=%s,\t rot=%s,\t parent=%s,\t properties=%s}' % (repr(self.position), repr(self.rotation), repr(self.parent), repr(self.properties))
+
+
+"""
+* chaque hote peut ajouter a la liste des objets a synchronisée, tenue par le serveur
+* a chaque cycle de sync, le serveur envoie aux clients la liste des objets dont il veut les sync (selon les clients)
+* en dehors du cycle le serveur traite les requetes et receptionne les sync
+* une sync qui est donnée par un client auquel le serveur n'a rien demande est oubliee
+* si un client renvoie unknown au lieu de la sync d'un objet, ou ne renvoie rien avant le cycle suivant, la reference de l'hote est effacee et la requete est donnée a tous les clients, le plus haut client repondant est choisi lors de a phase de traitement
+"""
 
 
 class Server(socket.socket):
@@ -43,12 +55,13 @@ class Server(socket.socket):
 	
 	run       = False      # put it to False to stop the server
 	hosts     = []         # list of connected hosts
-	datas     = {}         # list of obdatas
+	datas     = {}         # list of obdatas indexed by object name
 	thread    = None       # actual thread of the server
 	order     = []         # priority of trusting for each host, first in the list are the most trusted
 	delays    = {}         # list of date to take count of hosts packets (indexed by host)
 	users     = {}         # list of hosts connected referenced by username
 	passwords = {}         # list of passwords referenced by username
+	blacklist = []         # list of host to avoid (the server will never answer to its requests)
 	num_client = 0         # number of client connected
 	
 	next_update = 0        # next time to update database
@@ -96,29 +109,60 @@ class Server(socket.socket):
 						if data.position:   msg += 'ang\0%d\0%d\0%d' % data.angular
 						if data.parent != False:  msg += 'par\0%s' % str(data.parent)
 						self.sendto(msg, host)
-						# if this host is more trusted, this host will be in charge of this data
-						if data.host < index:
-							self.datas[obname].host = host
 				
-				elif similar(packet, b'getpro\0') and zeros >= 2:
+				elif similar(packet, b'getprop\0') and zeros >= 2:
 					obname, propname = packet.split(b'\0')[1:3]
 					if obname in self.datas and propname in self.datas[obname].properties :
 						self.sendto(b'setpro\0%s\0%s\0%s' % (obname, self.datas[obname].properties[propname]), host)
 				
 				elif similar(packet, b'unknown\0') and zeros >= 1:
 					obname = packet.split(b'\0')[1]
+					if obname in self.datas and index == self.datas[obname].host:
+						self.datas[obname].host = None
+						data.host = None
+				
+				else similar(packet, b'setmeca\0' and zeros = 1:
+					obname = packet.split(b'\0')[1]
 					if obname in self.datas:
-						self.datas[obname].host = self.max_client
+						data = self.datas[obname]
+						# if this host is more trusted, this host will be in charge of this data
+						if data.host == None or data.host <= index:
+							data.updated = True
+							data.host = index
+							(
+								data.position, data.rotation, 
+								data.velocity, data.angular, 
+								data.parent
+							) = pickle.loads(packet[:len(obname)]) # musn't be here a \0 ending
+							self.datas[obname] = data
+				
+				elif similar(packet, b'setprop\0' and zeros = 1:
+					obname = packet.split(b'\0')[1]
+					if obname in self.datas:
+						data = self.datas[obname]
+						# if this host is more trusted, this host will be in charge of this data
+						if data.host == None or data.host <= index:
+							data.updated = True
+							data.host = index
+							(
+								data.position, data.rotation, 
+								data.velocity, data.angular, 
+								data.parent
+							) = pickle.loads(packet[:len(obname)]) # musn't be here a \0 ending
+							self.datas[obname] = data
+					 
 				
 				elif similar(packet, b'disconnect\0'):
 					self.remove_client(host)
 			
 			# try to resolve host, or reject it
-			else:
+			else: 
 				if similar(packet, b'authentify\0'):
 					user, password = packet.split(b'\0')[1:3]
 					user = user.decode()
 					password = password.decode()
+					
+					# if client is not known, register it (except configuration)
 					if user not in self.passwords and self.registeration:
 						if self.username_conformity(user):
 							debugmsg('create user \'%s\'.' % user)
@@ -126,9 +170,13 @@ class Server(socket.socket):
 						else:
 							debugmsg('new username \'%s\' rejected because of unconformity.' % user)
 							send(b'username not conform', host)
+							break
 					else:
 						debugmsg('creation of new user is forbidden.')
 						send(b'new user disallowed', host)
+						break
+					
+					# user should be created
 					if password == self.passwords[user]:
 						if host in self.hosts and not self.multiple_sessions:
 							debugmsg('an other session for host %s refused.' % host[0])
@@ -143,6 +191,26 @@ class Server(socket.socket):
 					else:
 						self.delays[host] = time.time() + self.bad_password_timeout
 						self.send(b'password rejected', host)
+						
+		for name in range(len(self.datas)):
+			self.datas[name].updated = None
+			data = self.datas[name] # set marker to false, to detect if client doesn't answer
+			packets = [] # list of packets to send to clients concerned by this object
+			
+			if data.position or data.rotation or data.parent or data.velocity or data.angular :
+				packets.append(b'getmeca\0'+name.encode()+b'\0')
+			if data.properties :
+				for prop in data.properties and data.properties[prop]:
+					packets.append(b'getprop\0'+name.encode()+b'\0'+prop.encode()+b'\0')
+			# else, send request to this client and more trusted clients
+			if data.host and self.hosts[data.host]:
+				for host in self.hosts[:data.host+1]:
+					if host: self.sendto(packet, host)
+			# if an host is disconnected or away from this object take an other host
+			else:
+				for packet in packets:
+					self.send(packet, host)
+	
 	
 	# execute self.step() in an other thread
 	def thread_step(self):

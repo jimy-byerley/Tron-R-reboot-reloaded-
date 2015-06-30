@@ -67,7 +67,7 @@ class LightBaton(Item):
 			cam = bge.logic.getCurrentScene().active_camera
 			vec = self.getOwnerObject().worldPosition - cam.worldPosition
 			dev.listener_location = vec
-			dev.volume = 0.6
+			dev.volume = 0.3
 			dev.play(sound)
 			
 			self.cycle['class'].remove()
@@ -80,7 +80,7 @@ class LightBaton(Item):
 			cam = bge.logic.getCurrentScene().active_camera
 			vec = self.getOwnerObject().worldPosition - cam.worldPosition
 			dev.listener_location = vec
-			dev.volume = 0.6
+			dev.volume = 0.3
 			dev.play(sound)
 			
 			# spawn the cycle
