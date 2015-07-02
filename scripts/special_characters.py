@@ -34,8 +34,8 @@ animations = {
 		"take disk" : ('clu item', 60, 64, 66, 74),
 		# light-baton and cycle actions
 		"take light baton" : ('clu item', 241, 249, 249, 253),
-		"set cycle" : ('clu move', 216, 220, 224, 228), # départ, dabut de saut, prise 2 mains, position de conduite
-		"biking with disk" : ('clu move', 239, 243, 243, 247),
+		"set cycle" : ('clu move', 216, 220, 226, 236), # départ, dabut de saut, prise 2 mains, position de conduite
+		"biking with disk" : ('clu move', 247, 250, 250, 255),
 		"biking take disk" : ('clu item', 276, 278, 278, 280),
 		# head movements
 		"look Z" : ('clu head Z', 10, 20, 20, 30),
@@ -71,6 +71,12 @@ animations = {
 
 # dynamicaly defined animations
 animations['flynn'] = animations['clu']
+animations['flynn']['take light baton'] = ('flynn item', 241, 249, 249, 253)
+animations['flynn']['biking take disk'] = ('flynn item', 276, 278, 278, 280)
+animations['flynn']['catch disk']       = ('flynn item', 257, 257, 270, 270)
+animations['flynn']['take disk']        = ('flynn item', 60, 64, 66, 74)
+animations['flynn']['click']            = ('flynn item', 285, 289, 290, 292)
+
 
 # some prefixes
 models = 'models/'
