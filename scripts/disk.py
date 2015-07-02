@@ -92,7 +92,7 @@ def update_activity() :
 		if collision.status in (KX_SENSOR_ACTIVE, KX_SENSOR_JUST_ACTIVATED):
 			collision.reset()
 			owner['class'].hittimes += 1
-			if owner['class'].hittimes >= 3:
+			if owner['class'].hittimes >= 5:
 				owner['class'].hittimes = 0
 				owner['class'].returnToLauncher()
 			hits = collision.hitObjectList
