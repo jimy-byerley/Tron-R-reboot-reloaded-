@@ -47,9 +47,10 @@ class Avatar(character.Character) :
 		scene.addObject("skybox", ref)
 
 	def setHp(self, hp) :
+		pass
+		"""
 		if not self.overlay : self.overlay = bge.logic.getSceneList()[1]
 		character.Character.setHp(self, hp)
-		"""
 		if hp <= 0 :
 			hp = 0
 			bge.logic.getCurrentScene().suspend()
@@ -126,6 +127,11 @@ class Avatar(character.Character) :
 			self.updateItemOverlay()
 		thread.run = a
 		thread.start()
+	
+	def actionItem(self, action):
+		self.updateItemOverlay()
+		character.Character.actionItem(self, action)
+		self.updateItemOverlay()
 		
 		
 
