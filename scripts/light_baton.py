@@ -70,8 +70,19 @@ class LightBaton(Item):
 			dev.volume = 0.3
 			dev.play(sound)
 			
+			holo = self.object.children[0]
+			holo.visible = True
 			self.cycle['class'].remove()
 			self.cycle = None
+			holo.playAction("light baton prototype", 10, 0)
+			def t():
+				while holo.getActionFrame() >= 2:
+					time.sleep(0.05)
+				holo.visible = False
+			thread = threading.Thread()
+			thread.run = t
+			thread.start()
+			
 		else :
 			# play sound
 			path = bge.logic.sounds_path+'/light-vehicles/cycle-start.wav'
@@ -81,32 +92,35 @@ class LightBaton(Item):
 			vec = self.getOwnerObject().worldPosition - cam.worldPosition
 			dev.listener_location = vec
 			dev.volume = 0.3
-			dev.play(sound)
 			
 			# spawn the cycle
 			skin = self.getOwner().skin
 			armature = skin.armature
 			anim = skin.animations["set cycle"]
 			armature.playAction(anim[0], anim[1], anim[4], layer=1)
+			hologram = self.object.children[0]
 			def t():
 				while armature.getActionFrame(1) <= anim[3] :
 					time.sleep(0.05)
+				hologram.visible = True
+				hologram.playAction("light baton prototype", 0, 10)
+				dev.play(sound)
+				while hologram.getActionFrame(0) <= 8:
+					time.sleep(0.05)
 				scene = bge.logic.getCurrentScene()
 				self.cycle = scene.addObject("light-cycle", self.getOwnerObject())
+				self.cycle.worldLinearVelocity = self.getOwnerObject().worldLinearVelocity
 				self.cycle['class'] = LightCycle(self.cycle, "light cycle")
-				#self.cycle['class'].init()
-				self.cycle['class'].enter(self.getOwnerObject(), self.cycle['class'].driversplace)
 				self.cycle['class'].init()
+				self.cycle['class'].enter(self.getOwnerObject(), self.cycle['class'].driversplace)
+				hologram.visible = False
 				
 				color = self.object['color']
 				if color in self.cyclecolors : 
 					#self.cycle['class'].armature.replaceMesh(self.cyclecolors[color])
 					for child in self.cycle['class'].armature.children:
 						if 'body' in child:
-							#print(child.meshes)
 							child.replaceMesh(self.cyclecolors[color])
-							#child.update()
-							#print(child.meshes)
 					#self.cycle['class'].armature.update()
 
 			thread = threading.Thread()
@@ -142,7 +156,7 @@ class LightCycle(Vehicle):
 
 	def init(self):
 		self.motion = self.object.actuators["motion"]
-		self.motion.dLoc = Vector((0,0.25,0))
+		self.motion.dLoc = Vector((0,0,0))
 		self.object["move"] = True
 		for child in self.object.children:
 			if "floor sensor" in child:
@@ -203,7 +217,7 @@ class LightCycle(Vehicle):
 				self.animup = 0
 				s = self.motion.dLoc.y
 				current = self.armature.getActionFrame(0)%9
-				self.armature.playAction("ArmatureAction", current, current+9, speed=s, layer=0, play_mode=KX_ACTION_MODE_LOOP)
+				self.armature.playAction("light cycle running", current, current+9, speed=s, layer=0, play_mode=KX_ACTION_MODE_LOOP)
 			else : self.animup += 1
 			self.object['move'] = True
 			self.timer = date
