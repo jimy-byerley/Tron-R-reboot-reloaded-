@@ -206,7 +206,7 @@ class Skin(object) :
 		elif self.action not in ("run back", "walk back", "walk ford", "run ford") :
 			if current > anim[3] and current < anim[1] :
 				# retour en position de repos avant démarrage
-				print(self.action, "return to rest")
+				#print(self.action, "return to rest")
 				self.updateRest();
 			else :
 				# marche
@@ -354,6 +354,7 @@ class Skin(object) :
 			return
 		# détachement
 		self.items[index].removeParent()
+		self.items[index].localAngularVelocity += mathutils.Vector((1, 1, 0))
 		self.items[index] = None
 
 	def toggleItem(self, item, wielded=True, wait=False):
@@ -571,7 +572,7 @@ class Character(object) :
 		skin = None
 		if existing:
 			for child in self.box.children:
-				if child.name == self.skin_name+" armature":
+				if child.name[-9:] == " armature":
 					existing = child
 					break
 		self.skin.spawn(existing)
