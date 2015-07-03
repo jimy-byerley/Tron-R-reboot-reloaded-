@@ -10,12 +10,15 @@ made after the film.
 
 - several skins
 ![skin rinzler](screenshots/rinzler-back.png) ![skin tron](screenshots/tron-side.png)
-![skin clu](screenshots/clu-side.png) ![skin monitor](screenshots/monitor-back.png)
+![skin clu](screenshots/clu-side.png)         ![skin monitor](screenshots/monitor-back.png)
+![skin flynn](screenshots/flynn-face.png)
 - open-world 
-![street](screenshots/street.png) ![city](screenshots/city.png)
+![street](screenshots/street.png) ![city](screenshots/city_1.png)
 - items
+![HUD](screenshots/HUD.png)
 - better
 ![cycle](screenshots/cycle_on_grid.png)
+![effects](sreenshots/2d_filters/history_mode.png)
 
 suggestions: jimy.byerley@gmail.com
 
@@ -60,6 +63,6 @@ To change game settings, edit config.txt file
 
 OS platform: Linux (tested), Windows, but mabe maxOS should work too.
 Blender :  version >= 2.70  (made with blender 2.72)
-(Blender 2.72 is recomended because newer versions are crashing)
+(Blender 2.72 is recomended because newer versions are crashing), see /blender-versions.txt for blender compatible versions
 
 bugs: jimy.byerley@gmail.com
