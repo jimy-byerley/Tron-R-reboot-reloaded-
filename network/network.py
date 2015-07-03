@@ -43,15 +43,9 @@ class obdata:
 	host = 0               # maximal index of host who can provide information about this object
 	updated = False        # marker for 'updated during last cycle'
 	
-	position = False
-	rotation = False
-	parent = False
-	properties = False
-	velocity = False
-	angular = False
-	
-	def __repr__(self):
-		return '{pos=%s,\t rot=%s,\t parent=%s,\t properties=%s}' % (repr(self.position), repr(self.rotation), repr(self.parent), repr(self.properties))
+	physics = None      # dump of physics properties of the object, None means physic properties not synchronized.
+	properties = {}     # dumps of game object properties of the object, only references properties are inside.
+	                    # properties names are bytes (for optimisation)
 
 
 """
@@ -74,7 +68,7 @@ class Server(socket.socket):
 	
 	run       = False      # put it to False to stop the server
 	hosts     = []         # list of connected hosts
-	datas     = {}         # list of obdatas indexed by object name
+	datas     = {}         # list of obdatas indexed by object name (bytes for optimisation)
 	thread    = None       # actual thread of the server
 	order     = []         # priority of trusting for each host, first in the list are the most trusted
 	delays    = {}         # list of date to take count of hosts packets (indexed by host)
@@ -121,16 +115,15 @@ class Server(socket.socket):
 					obname = packet.split(b'\0')[1]
 					if obname in self.datas:
 						data = self.datas[obname]
-						msg = b'setmeca\0'+obname.encode()+'\0'+ pickle.dumps((
-							data.positon,  data.rotation,
-							data.velocity, data.angular,
-							data.parent))
-						self.sendto(msg, host)
+						if data.physics:
+							msg = b'setmeca\0' + obname + b'\0' + data.physics
+							self.sendto(msg, host)
 				
 				elif similar(packet, b'getprop\0') and zeros >= 2:
 					obname, propname = packet.split(b'\0')[1:3]
 					if obname in self.datas and propname in self.datas[obname].properties :
-						self.sendto(b'setpro\0%s\0%s\0%s' % (obname, self.datas[obname].properties[propname]), host)
+						msg = b'setpro\0' + obname + b'\0'+ propname + b'\0' + self.datas[obname].properties[propname]
+						self.sendto(msg), host)
 				
 				elif similar(packet, b'unknown\0') and zeros >= 1:
 					obname = packet.split(b'\0')[1]
@@ -138,7 +131,8 @@ class Server(socket.socket):
 						self.datas[obname].host = None
 						data.host = None
 				
-				else similar(packet, b'setmeca\0' and zeros = 1:
+				# packet of kind:    setmeca.name.dump  ('\0' instead of .)
+				else similar(packet, b'setmeca\0' and zeros >= 1: 
 					obname = packet.split(b'\0')[1]
 					if obname in self.datas:
 						data = self.datas[obname]
@@ -146,26 +140,19 @@ class Server(socket.socket):
 						if data.host == None or data.host <= index:
 							data.updated = True
 							data.host = index
-							(
-								data.position, data.rotation, 
-								data.velocity, data.angular, 
-								data.parent
-							) = pickle.loads(packet[:len(obname)]) # musn't be here a \0 ending
+							data.physics = packet[:len(obname)])      
 							self.datas[obname] = data
 				
-				elif similar(packet, b'setprop\0' and zeros = 1:
-					obname = packet.split(b'\0')[1]
+				# packet of kind:    setprop.name.propertyname.dump   ('\0' instead if .)
+				elif similar(packet, b'setprop\0' and zeros >= 2:
+					obname, propname = packet.split(b'\0')[1:3]
 					if obname in self.datas:
 						data = self.datas[obname]
 						# if this host is more trusted, this host will be in charge of this data
 						if data.host == None or data.host <= index:
 							data.updated = True
 							data.host = index
-							(
-								data.position, data.rotation, 
-								data.velocity, data.angular, 
-								data.parent
-							) = pickle.loads(packet[:len(obname)]) # musn't be here a \0 ending
+							data.properties[propname] = packet[10+len(obname)+len(propname):]
 							self.datas[obname] = data
 					 
 				
