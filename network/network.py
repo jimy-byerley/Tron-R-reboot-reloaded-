@@ -18,7 +18,7 @@ This file is part of Tron-R.
 """
 
 # python defined
-import threading, socket, time
+import threading, socket, time, pickle
 # from the game
 import ip_addr
 
@@ -66,7 +66,7 @@ class obdata:
 class Server(socket.socket):
 	packet_size          = 1024
 	max_client           = 30      # maximum number of clients (can be set at runtime to increase number of clients but doesn't quick connected clients
-	update_frequency     = 0.5     # maximum time (s) between 2 server update communication (update of client datas)
+	update_period     = 0.5     # maximum time (s) between 2 server update communication (update of client datas)
 	bad_password_timeout = 3       # time the client should wait when get a wrong password (second)
 	multiple_sessions    = False   # set to True, allow multiple host to use the same user (account and password)
 	registeration        = True    # set to True, allow new users to be created
@@ -121,12 +121,10 @@ class Server(socket.socket):
 					obname = packet.split(b'\0')[1]
 					if obname in self.datas:
 						data = self.datas[obname]
-						msg = b'setmeca\0%s\0' % obname
-						if data.position:   msg += 'pos\0%d\0%d\0%d' % data.position
-						if data.position:   msg += 'rot\0%d\0%d\0%d' % data.rotation
-						if data.position:   msg += 'vel\0%d\0%d\0%d' % data.velocity
-						if data.position:   msg += 'ang\0%d\0%d\0%d' % data.angular
-						if data.parent != False:  msg += 'par\0%s' % str(data.parent)
+						msg = b'setmeca\0'+obname.encode()+'\0'+ pickle.dumps((
+							data.positon,  data.rotation,
+							data.velocity, data.angular,
+							data.parent))
 						self.sendto(msg, host)
 				
 				elif similar(packet, b'getprop\0') and zeros >= 2:
