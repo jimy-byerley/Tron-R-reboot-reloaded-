@@ -32,6 +32,8 @@ marker_property_property = "network_prop"   # can ba a tuple or a string, will b
 class Client(socket.socket):
 	packet_size   = 1024     # max size of buffers to receive from the server
 	update_period = 1.0      # minimum time interval between 2 update from the server, of objects positions
+	# extendable list of properties to exclude of syncs (to avod security breachs)
+	properties_blacklist = ["class","repr","armature", "uniqid", marker_property_physic, marker_property_property]
 	
 	synchronized = []        # list of objects to synchronize
 	next_update = 0          # next time to ask the server for update informations
@@ -92,7 +94,7 @@ class Client(socket.socket):
 			elif similar(packet, b'setprop\0' and zeros >= 2:
 				obname, propname = packet.split(b'\0')[1:3]
 				ob = obname.decode()
-				if obname in self.scenes.objects:
+				if obname in self.scenes.objects and propname not in self.properties_blacklist:
 					self.scenes.objects[ob][propname.decode()] = packet[:10+len(obname)+len(propname)]
 					
 			
@@ -114,7 +116,8 @@ class Client(socket.socket):
 							ok=False
 					if ok:
 						for propname in obj[marker_property_property]:
-							self.send(b'getprop\0'+ obj.name.encode() +b'\0'+ propname.encode()
+							if propname not in self.properties_blacklist: 
+								self.send(b'getprop\0'+ obj.name.encode() +b'\0'+ propname.encode()
 		
 		self.next_update = time.time() + self.update_period
 		
