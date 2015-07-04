@@ -21,10 +21,19 @@ import bge
 import threading, socket, time, pickle
 from network import *
 
+
+marker_property_physic = "network_meca"     # set to True to enable synchronizationn of physic properties (velocity, angular, pos, rot, ...)
+marker_property_property = "network_prop"   # can ba a tuple or a string, will be converted automatically in string during the game
+											# a tuple contain the string names of the properties to sync
+											# a string contain the string names of the properties to sync separated by spaces
+
+
+
 class Client(socket.socket):
 	packet_size   = 1024     # max size of buffers to receive from the server
 	update_period = 1.0      # minimum time interval between 2 update from the server, of objects positions
 	
+	synchronized = []        # list of objects to synchronize
 	next_update = 0          # next time to ask the server for update informations
 	
 	def __init__(self, remote, scene=None, user="", password=""):
@@ -90,6 +99,25 @@ class Client(socket.socket):
 			elif similar(packet, PACKET_STOP):
 				self.close()
 				return
+		
+		for obj in self.synchronized:
+			if obj :
+				if marker_property_physic in obj and obj[marker_property_physic]:
+					self.send(b'getmeca\0'+obj.name.encode())
+				if marker_property_property in obj:
+					ok=True
+					if type(obj[marker_property_property]) == str:   
+						try: obj[marker_property_property] = eval(obj[marker_property_property])
+						except:
+							print("client.step: error on loading marker for network sync (property '%s') on object '%s', delete property." % (marker_property_property, obj.name))
+							del obj[marker_property_property]
+							ok=False
+					if ok:
+						for propname in obj[marker_property_property]:
+							self.send(b'getprop\0'+ obj.name.encode() +b'\0'+ propname.encode()
+		
+		self.next_update = time.time() + self.update_period
+		
 	
 	def thread_step(self):
 		self.thread = threading.Thread()

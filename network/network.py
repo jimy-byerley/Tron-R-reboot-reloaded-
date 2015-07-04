@@ -214,6 +214,7 @@ class Server(socket.socket):
 			else:
 				for packet in packets:
 					self.send(packet, host)
+		self.next_update = time.time() + self.update_period
 	
 	
 	# execute self.step() in an other thread
