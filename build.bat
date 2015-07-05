@@ -1,7 +1,7 @@
 @echo off
 
 rem add path for common tools
-set PATH=%PATH%;%CD%/softwares/win-utils
+set PATH=%PATH%;%CD%\softwares\win-utils
 
 rem get system architecture
 set RegQry=HKLM\Hardware\Description\System\CentralProcessor\0
@@ -41,6 +41,7 @@ dir /b blender-* > blendername.txt
 for /f %%i in (blendername.txt) do rename %%i blender
 del blendername.txt
 cd ..
+echo %CD%\softwares\blender > blenderplayer_path.txt
 
 rem delete useless files
 echo Removing useless files (developement and source files)
