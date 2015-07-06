@@ -22,23 +22,38 @@ import threading, socket, time, pickle
 from network import *
 
 
+<<<<<<< HEAD
 marker_property_physic   = "network_meca"   # set to True to enable synchronizationn of physic properties (velocity, angular, pos, rot, ...)
 marker_property_property = "network_prop"   # can ba a tuple or a string, will be converted automatically in string during the game
 											# a tuple contain the string names of the properties to sync
 											# a string contain the string names of the properties to sync separated by spaces or punctuation.
+=======
+marker_property_physic = "network_meca"     # set to True to enable synchronizationn of physic properties (velocity, angular, pos, rot, ...)
+marker_property_property = "network_prop"   # can ba a tuple or a string, will be converted automatically in string during the game
+											# a tuple contain the string names of the properties to sync
+											# a string contain the string names of the properties to sync separated by spaces
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 
 
 
 class Client(socket.socket):
 	packet_size   = 1024     # max size of buffers to receive from the server
+<<<<<<< HEAD
 	update_period = 0.1      # minimum time interval between 2 update from the server, of objects positions
 	step_time     = 0.05     # maximum time for each step
+=======
+	update_period = 1.0      # minimum time interval between 2 update from the server, of objects positions
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 	# extendable list of properties to exclude of syncs (to avod security breachs)
 	properties_blacklist = ["class","repr","armature", "uniqid", marker_property_physic, marker_property_property]
 	
 	synchronized = []        # list of objects to synchronize
+<<<<<<< HEAD
 	next_update  = 0         # next time to ask the server for update informations
 	run          = False     # put it to False to stop the client execution stepn (automaticaly set to True on step start
+=======
+	next_update = 0          # next time to ask the server for update informations
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 	
 	def __init__(self, remote, scene=None, user="", password=""):
 		self.remote = remote
@@ -94,6 +109,7 @@ class Client(socket.socket):
 					obj = self.scene.objects[ob]
 					(obj.worldPosition,        obj.worldOrientation,
 					obj.worldLinearVelocity,  obj.worldAngularVelocity,
+<<<<<<< HEAD
 					parent)     = pickle.loads(packet[9+len(obname):])
 					obj.setParent(parent)
 				
@@ -135,6 +151,40 @@ class Client(socket.socket):
 									self.send(b'getprop\0'+ obj.name.encode() +b'\0'+ propname.encode())
 			
 			self.next_update = time.time() + self.update_period
+=======
+					obj.parent     = pickle.loads(packet[9+len(obname):])
+			
+			# packet of kind:    setprop.name.propertyname.dump   ('\0' instead if .)
+			elif similar(packet, b'setprop\0' and zeros >= 2:
+				obname, propname = packet.split(b'\0')[1:3]
+				ob = obname.decode()
+				if obname in self.scenes.objects and propname not in self.properties_blacklist:
+					self.scenes.objects[ob][propname.decode()] = packet[:10+len(obname)+len(propname)]
+					
+			
+			elif similar(packet, PACKET_STOP):
+				self.close()
+				return
+		
+		for obj in self.synchronized:
+			if obj :
+				if marker_property_physic in obj and obj[marker_property_physic]:
+					self.send(b'getmeca\0'+obj.name.encode())
+				if marker_property_property in obj:
+					ok=True
+					if type(obj[marker_property_property]) == str:   
+						try: obj[marker_property_property] = eval(obj[marker_property_property])
+						except:
+							print("client.step: error on loading marker for network sync (property '%s') on object '%s', delete property." % (marker_property_property, obj.name))
+							del obj[marker_property_property]
+							ok=False
+					if ok:
+						for propname in obj[marker_property_property]:
+							if propname not in self.properties_blacklist: 
+								self.send(b'getprop\0'+ obj.name.encode() +b'\0'+ propname.encode()
+		
+		self.next_update = time.time() + self.update_period
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 		
 	
 	def thread_step(self):

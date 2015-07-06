@@ -182,6 +182,7 @@ class Server(socket.socket):
 								data.properties[propname] = packet[10+len(obname)+len(propname):]
 								self.datas[obname] = data
 						
+<<<<<<< HEAD
 					
 					elif similar(packet, PACKET_STOP):
 						self.remove_client(host)
@@ -252,6 +253,27 @@ class Server(socket.socket):
 							if host and self.answering_clients[i]: self.sendto(packet, host)
 			self.next_update = time.time() + self.update_period
 			self.answering_clients = len(self.answering_clients)* [False]
+=======
+		for name in range(len(self.datas)):
+			self.datas[name].updated = None
+			data = self.datas[name] # set marker to false, to detect if client doesn't answer
+			packets = [] # list of packets to send to clients concerned by this object
+			
+			if data.position or data.rotation or data.parent or data.velocity or data.angular :
+				packets.append(b'getmeca\0'+name.encode()+b'\0')
+			if data.properties :
+				for prop in data.properties and data.properties[prop]:
+					packets.append(b'getprop\0'+name.encode()+b'\0'+prop.encode()+b'\0')
+			# else, send request to this client and more trusted clients
+			if data.host and self.hosts[data.host]:
+				for host in self.hosts[:data.host+1]:
+					if host: self.sendto(packet, host)
+			# if an host is disconnected or away from this object take an other host
+			else:
+				for packet in packets:
+					self.send(packet, host)
+		self.next_update = time.time() + self.update_period
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 	
 	
 	# execute self.step() in an other thread
