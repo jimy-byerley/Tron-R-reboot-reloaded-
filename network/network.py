@@ -273,6 +273,9 @@ class Server(socket.socket):
 				for packet in packets:
 					self.send(packet, host)
 		self.next_update = time.time() + self.update_period
+<<<<<<< HEAD
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
+=======
 >>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 	
 	

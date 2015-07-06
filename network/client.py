@@ -23,15 +23,21 @@ from network import *
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 marker_property_physic   = "network_meca"   # set to True to enable synchronizationn of physic properties (velocity, angular, pos, rot, ...)
 marker_property_property = "network_prop"   # can ba a tuple or a string, will be converted automatically in string during the game
 											# a tuple contain the string names of the properties to sync
 											# a string contain the string names of the properties to sync separated by spaces or punctuation.
 =======
+=======
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 marker_property_physic = "network_meca"     # set to True to enable synchronizationn of physic properties (velocity, angular, pos, rot, ...)
 marker_property_property = "network_prop"   # can ba a tuple or a string, will be converted automatically in string during the game
 											# a tuple contain the string names of the properties to sync
 											# a string contain the string names of the properties to sync separated by spaces
+<<<<<<< HEAD
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
+=======
 >>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 
 
@@ -43,15 +49,21 @@ class Client(socket.socket):
 	step_time     = 0.05     # maximum time for each step
 =======
 	update_period = 1.0      # minimum time interval between 2 update from the server, of objects positions
+<<<<<<< HEAD
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
+=======
 >>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 	# extendable list of properties to exclude of syncs (to avod security breachs)
 	properties_blacklist = ["class","repr","armature", "uniqid", marker_property_physic, marker_property_property]
 	
 	synchronized = []        # list of objects to synchronize
 <<<<<<< HEAD
+<<<<<<< HEAD
 	next_update  = 0         # next time to ask the server for update informations
 	run          = False     # put it to False to stop the client execution stepn (automaticaly set to True on step start
 =======
+=======
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 	next_update = 0          # next time to ask the server for update informations
 >>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 	
@@ -184,6 +196,9 @@ class Client(socket.socket):
 								self.send(b'getprop\0'+ obj.name.encode() +b'\0'+ propname.encode()
 		
 		self.next_update = time.time() + self.update_period
+<<<<<<< HEAD
+>>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
+=======
 >>>>>>> 2278660392f45922b6cd893b0407bcd9d8e030cb
 		
 	
