@@ -5,7 +5,7 @@ if exist blenderplayer_path.txt (
 	set blenderplayer=%location%\blenderplayer.exe
 	if exist %blenderplayer% (
 		@echo on
-		%blenderplayer% scenes/menu.blend
+		"%blenderplayer%" scenes/menu.blend
 
 		@echo off
 		pause
