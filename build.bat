@@ -42,7 +42,7 @@ for /f %%i in (blendername.txt) do rename %%i blender
 del blendername.txt
 cd ..
 rem index the blenderplayer executable location
-echo %CD%\softwares\blender > blenderplayer_path.txt
+echo %CD%\softwares\blender> blenderplayer_path.txt
 
 rem delete useless files
 echo Removing useless files (developement and source files)
