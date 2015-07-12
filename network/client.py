@@ -40,6 +40,14 @@ class Client(socket.socket):
 	next_update  = 0         # next time to ask the server for update informations
 	run          = False     # put it to False to stop the client execution stepn (automaticaly set to True on step start
 	
+	callbacks = []         # list of functions to call when a non-standard packet is received, function must 
+	                       # take 2 parameters: the server instance and the packet received (bytes)
+	                       # return True to erase the packet without executing other callbacks on it.
+	                       # the callbacks are executed in the list order.
+	
+	queue = []             # list of packet to send after every threatment of incomming packet (send whenever 
+	                       # there is no packet received)
+	
 	def __init__(self, remote, scene=None, user="", password=""):
 		self.remote = remote
 		self.username = user
@@ -53,8 +61,9 @@ class Client(socket.socket):
 		self.run = True
 		end_step = time.time() + self.step_time
 		while time.time() < self.next_update and time.time() < end_step and self.run:
+			# recvfrom raise an error on no packet available
 			try:    packet, host = self.recvfrom(self.packet_size)
-			except: time.sleep(0.001)
+			except socket.error or BlockingIOError: time.sleep(0.001)
 			else:
 				# only packets from the server are accepted (limit intrusion)
 				while host != self.remote:   packet, host = recvfrom(self.packet_size)
@@ -115,6 +124,18 @@ class Client(socket.socket):
 					self.close()
 					self.run = False
 					return
+				
+				else:
+					for callback in self.callbacks:
+						try: if callback(self, packet)
+						except: print('error in callback:', callback)
+			
+			# send queued, in the list order, one packet per packet received if the client receive.
+			if self.queue:
+				packet = self.queue.pop(0)
+				try: self.send(packet)
+				except: print('unable to send queued packet:', packet)
+		
 		
 		if end_step > time.time() and self.run:
 			for obj in self.synchronized:
@@ -157,3 +178,22 @@ class Client(socket.socket):
 	def stop(self):
 		self.run = False
 		self.send(PACKET_STOP)
+
+
+def try_login(server, user, password):
+	socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	socket.connect(server)
+	try: 
+		socket.send('authentify\0'+ user.encode() +b'\0'+ password.encode())
+	except:
+		print('password or username could not be encoded, try an other')
+		return False
+	reponse = socket.recv(1024)
+	if reponse == b'password accepted':
+		return ""
+	else:
+		try:
+			return reponse.decode()
+		except:
+			return "reponse '%s' doesn't make sense" % repr(reponse)
+			

@@ -83,7 +83,17 @@ class Server(socket.socket):
 	
 	next_update = 0        # next time to update database
 	cleared_index = []     # index of freed clients (in lists)
-	answering_clients = [] # list of booleans associated with index of clients (True if the client has send a request after the last update)
+	answering_clients = [] # list of booleans associated with index of clients (True if the client has send a 
+	                       # request after the last update)
+	
+	callbacks = []         # list of functions to call when a non-standard packet is received, function must take 
+	                       # 3 parameters: the server instance, the packet received (bytes), the couple (ip, port)
+	                       # of the host that emited this packet.
+	                       # return True to erase the packet without executing other callbacks on it.
+	                       # the callbacks are executed in the list order.
+	
+	queue = {}             # list of packet to send after every threatment of incomming packet (send whenever there 
+	                       # is no packet received). Indexed by host (ip, port), with a special channel 'all' (packets are send to all hosts)
 	
 	
 	# put lan to False if you don't want to use lan interface
@@ -100,6 +110,7 @@ class Server(socket.socket):
 		else:
 			debugmsg('LAN interface (with ip of computer %s) used.' % localhost)
 		self.bind((localhost, self.port))
+		self.setblocking(False)
 	
 	
 	# server step to tread all client requests
@@ -109,7 +120,7 @@ class Server(socket.socket):
 		while time.time() < self.next_update and time.time() < end_step and self.run :
 			# thread client requests
 			try:    packet, host = self.recvfrom(self.packet_size)
-			except: time.sleep(0.001)
+			except socket.error or BlockingIOError: time.sleep(0.001)
 			else:
 				# wait for quicked or delayed hosts (bad password for exemple)
 				while host in self.delays and time.time() < self.delays[host]:
@@ -185,6 +196,11 @@ class Server(socket.socket):
 					
 					elif similar(packet, PACKET_STOP):
 						self.remove_client(host)
+					
+					else:
+						for callback in self.callbacks:
+							try: if callback(self, packet, host): break
+							except: print('error in callback:', callback)
 				
 				# try to resolve host, or reject it
 				else: 
@@ -224,6 +240,23 @@ class Server(socket.socket):
 						else:
 							self.delays[host] = time.time() + self.bad_password_timeout
 							self.sendto(subject + b'password rejected', host)
+			
+			# send queued, in the list order, one packet per packet received if the client receive.
+			if self.queue:
+				for host in self.queue:
+					packet = self.queue[host].pop(0)
+					# special channel named 'all' send packets to all hosts
+					if host == 'all':
+						for h in self.hosts:
+							# packet can contain an error.
+							try: self.send(packet, h)
+							except: print('unable to send queued packet:', packet)
+					# else, each channel is particular to one host
+					else:
+						# packet can contain an error.
+						try: self.send(packet, host)
+						except: print('unable to send queued packet:', packet)
+		
 		
 		if time.time() < end_step and self.run:
 			for name in self.datas:
@@ -305,6 +338,32 @@ class Server(socket.socket):
 			self.order.pop(self.order.index(index))
 			self.num_client -= 1
 			self.cleared_index.append(index)
+			for user in self.users:
+				if host in self.users[user]: self.users[user].pop(self.users[user].find(host))
 			return index
 		else:
 			return -1
+
+
+
+if __name__ == '__main__':
+	port = 30000
+	if len(sys.argv) > 1: port = int(argv[1])
+	server = network.Server(port)
+	server.setblocking(False)
+	run = True
+
+	def f():
+		while run:
+			server.step()
+
+	t = threading.Thread()
+	t.run = f
+	t.start()
+
+	input('type enter to stop.')
+
+	run = False
+	server.stop()
+	t.join()
+	server.close()
