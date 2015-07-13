@@ -127,12 +127,8 @@ class Client(socket.socket):
 				
 				else:
 					for callback in self.callbacks:
-<<<<<<< HEAD
 						try: 
 							if callback(self, packet): break
-=======
-						try: if callback(self, packet)
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 						except: print('error in callback:', callback)
 			
 			# send queued, in the list order, one packet per packet received if the client receive.
@@ -188,7 +184,6 @@ class Client(socket.socket):
 
 
 def try_login(server, user, password):
-<<<<<<< HEAD
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.settimeout(10)
 	s.connect(server)
@@ -198,16 +193,6 @@ def try_login(server, user, password):
 		s.close()
 		return 'timeout error'
 	s.close()
-=======
-	socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	socket.connect(server)
-	try: 
-		socket.send('authentify\0'+ user.encode() +b'\0'+ password.encode())
-	except:
-		print('password or username could not be encoded, try an other')
-		return False
-	reponse = socket.recv(1024)
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 	if reponse == b'password accepted':
 		return ""
 	else:

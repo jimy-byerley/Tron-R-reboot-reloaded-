@@ -199,12 +199,8 @@ class Server(socket.socket):
 					
 					else:
 						for callback in self.callbacks:
-<<<<<<< HEAD
 							try: 
 								if callback(self, packet, host): break
-=======
-							try: if callback(self, packet, host): break
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 							except: print('error in callback:', callback)
 				
 				# try to resolve host, or reject it
