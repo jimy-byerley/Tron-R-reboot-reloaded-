@@ -63,7 +63,7 @@ class Client(socket.socket):
 		while time.time() < self.next_update and time.time() < end_step and self.run:
 			# recvfrom raise an error on no packet available
 			try:    packet, host = self.recvfrom(self.packet_size)
-			except socket.error or BlockingIOError: time.sleep(0.001)
+			except: time.sleep(0.001)
 			else:
 				# only packets from the server are accepted (limit intrusion)
 				while host != self.remote:   packet, host = recvfrom(self.packet_size)
@@ -127,8 +127,7 @@ class Client(socket.socket):
 				
 				else:
 					for callback in self.callbacks:
-						try: 
-							if callback(self, packet): break
+						try: if callback(self, packet)
 						except: print('error in callback:', callback)
 			
 			# send queued, in the list order, one packet per packet received if the client receive.
@@ -164,10 +163,8 @@ class Client(socket.socket):
 		self.thread.run = self.step
 		self.thread.start()
 	
-	def authentify(self, username='', password=''):
-		self.username = username or self.username
-		self.password = password or self.password
-		self.sendto(b'authentify\0'+ self.username.encode() +b'\0'+ self.password.encode(), self.remote)
+	def authentify(self, username, password):
+		self.sendto(b'authentify\0'+ username.encode() +b'\0'+ password.encode(), self.remote)
 	
 	# clear the socket's queue, return the list of packet received
 	def clear_requests(self):
@@ -181,23 +178,3 @@ class Client(socket.socket):
 	def stop(self):
 		self.run = False
 		self.send(PACKET_STOP)
-
-
-def try_login(server, user, password):
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	s.settimeout(10)
-	s.connect(server)
-	s.send(b'authentify\0'+ user.encode() +b'\0'+ password.encode())
-	try: reponse = s.recv(1024)
-	except socket.timeout:
-		s.close()
-		return 'timeout error'
-	s.close()
-	if reponse == b'password accepted':
-		return ""
-	else:
-		try:
-			return reponse.decode()
-		except:
-			return "reponse '%s' doesn't make sense" % repr(reponse)
-			

@@ -1,0 +1,8 @@
+[ip 12.0.0.4 trantor]
+key="truc en boite"
+offset="chose muche"
+
+[ip localhost chose-muche]
+key="muche"
+offset="t      ==>"
+

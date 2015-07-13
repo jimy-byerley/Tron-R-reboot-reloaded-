@@ -1,0 +1,6 @@
+Le client est un programme python quel qu'il soit, il n'est pas necessaire que le systeme soit telechargé sur le client pour qu'il fonctionne, le monde du serveur sera téléchargé à la connexion.
+Le serveur se constitue de 2 parties : un server de fichier qui délivre les fichiers du monde virtuel, et un serveur qui coordonne les clients (chaque client reconstitue la plus grande partie du jeu tout seul, en local)
+
+A la connexion depuis un client, le port recoit un voilier qui symbolise le telechargement du monde virtuel (en mode update). A son arrivée, le client lance le fichier de boot du monde virtuel reçu en lui passant des parametres en argument (ou si ce n'est pas possible, dans un fichier de config). Le boot crée le personnage du joueur et crée une nouvelle connexion au serveur de coordination cette fois.
+
+Le serveur de coordination envoie en continu a tous les clients les positions et mouvements des autres joueurs et objets selon les positions et mouvements des joueurs et objets sur un ou plusieurs clients "trustés" (si il n'y en a pas de trusté, il en prend 1 au pif sans le lui dire (pas de hack).

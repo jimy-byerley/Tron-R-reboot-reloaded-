@@ -120,7 +120,7 @@ class Server(socket.socket):
 		while time.time() < self.next_update and time.time() < end_step and self.run :
 			# thread client requests
 			try:    packet, host = self.recvfrom(self.packet_size)
-			except socket.error or BlockingIOError: time.sleep(0.001)
+			except: time.sleep(0.001)
 			else:
 				# wait for quicked or delayed hosts (bad password for exemple)
 				while host in self.delays and time.time() < self.delays[host]:
@@ -199,8 +199,7 @@ class Server(socket.socket):
 					
 					else:
 						for callback in self.callbacks:
-							try: 
-								if callback(self, packet, host): break
+							try: if callback(self, packet, host): break
 							except: print('error in callback:', callback)
 				
 				# try to resolve host, or reject it
