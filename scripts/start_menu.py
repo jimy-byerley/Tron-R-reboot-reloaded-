@@ -4,6 +4,7 @@ from bge.events import *
 from mathutils import *
 from math import *
 import os, sys, time, threading
+<<<<<<< HEAD
 
 # network module
 sys.path.append(bge.logic.expandPath('//../network'))
@@ -33,6 +34,8 @@ connect_action_loop   = (889, 889)
 connect_to_server     = (889, 900)
 connect_download      = (900, 906)
 
+=======
+>>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 
 def read_config():
 	## load global configuration file ##
@@ -58,6 +61,28 @@ def read_config():
 			config[name] = eval(value)
 		return config
 
+<<<<<<< HEAD
+=======
+scene = bge.logic.getCurrentScene()
+armature = scene.objects['armature']
+cursor   = scene.objects['root_cursor']
+
+connect_label_color = scene.objects['connect_label'].color
+
+bge.render.showMouse(True)
+setExitKey(0)
+
+root_action_start = (25, 34)
+root_action_loop = (34, 633)
+title_start = (11, 35)
+settings_action_start = (701, 736)
+settings_action_loop = (736,736)
+settings_action_stop = (736,758)
+settings_holo_loop = (0,140)
+connect_action_start = (879,889)
+connect_action_loop = (889,889)
+
+>>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 
 def goto_menu_root():
 	armature.playAction('main', 
@@ -75,9 +100,12 @@ def goto_menu_root():
 		title_start[1], 
 		layer=3, 
 		play_mode=KX_ACTION_MODE_PLAY)	
+<<<<<<< HEAD
 
 def do_not():
 	pass
+=======
+>>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 
 def mouse_rotate_interface(cont):
 	owner = cont.owner
@@ -104,9 +132,14 @@ def start_game(blenderoptions='', gameoptions=''):
 		f = open(bge.logic.expandPath('//../blenderplayer_path.txt'), 'r')
 		blenderplayer = f.read()[:-1] +'/blenderplayer'
 		f.close()
+<<<<<<< HEAD
 		command = '%s -w %d %d %s %s - %s -l %s' % (
+=======
+		command = '%s -w %d %d %s  %s - %s -l %s' % (
+>>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 			blenderplayer,
 			width, height,
+			blenderoptions, gameoptions,
 			bge.logic.expandPath('//main.blend'),
 			blenderoptions, gameoptions,
 			bge.logic.expandPath('//../backup-exemple.txt'),
@@ -120,6 +153,7 @@ def start_game(blenderoptions='', gameoptions=''):
 		command = '%s -w %d %d %s %s - %s -l %s' % (
 			blenderplayer,
 			width, height,
+			blenderoptions, gameoptions,
 			bge.logic.expandPath('//main.blend'),
 			blenderoptions, gameoptions,
 			bge.logic.expandPath('//..\\backup-exemple.txt'),
@@ -175,6 +209,7 @@ root_item_selected = 3
 selected_root = 0
 selected_net_address = 1
 selected_net_port = 2
+<<<<<<< HEAD
 selected_net_user = 3
 selected_net_password = 4
 selected_properties = 5
@@ -183,6 +218,9 @@ selected_properties = 5
 ####################
 # KEYBOARD CONTROL #
 ####################
+=======
+selected_properties = 3
+>>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 
 def keyboard_item(cont):
 	global root_items, root_item_selected
@@ -270,10 +308,17 @@ def keyboard_item(cont):
 			cursor.setParent(root_items[root_item_selected])
 			cursor.localPosition = (
 				0.65,
+<<<<<<< HEAD
 				-0.01,
 				0, #root_items[root_item_selected].localPosition.z
 				)
 			cursor.localOrientation = Euler((-pi/2, 0., 0.))
+=======
+				0.06,
+				0, #root_items[root_item_selected].localPosition.z
+				)
+			cursor.localOrientation = Euler((pi/2, 0., 0.))
+>>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 		keyboard.reset()
 	
 	elif owner['selection'] == selected_net_address:
@@ -307,6 +352,7 @@ def keyboard_item(cont):
 				root_action_loop[1], 
 				layer=0, 
 				play_mode=KX_ACTION_MODE_LOOP)
+<<<<<<< HEAD
 		elif [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events and ([LEFTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events or [RIGHTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events):
 			owner['selection'] = selected_net_address
 		elif [ENTERKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events or [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
@@ -358,6 +404,27 @@ def keyboard_item(cont):
 			pass
 		else:
 			text_enter(keyboard, owner, scene.objects['label_net_password'])
+=======
+		elif [ENTERKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
+			# launch game with network connexion
+			label = scene.objects['connect_label']
+			address = scene.objects['label_net_address']['Text']
+			port = scene.objects['label_net_port']['Text']
+			if not port.isnumeric():
+				label['Text'] = 'bad port'
+				label.color = (1, 0.2, 0.2, 1)
+			else:
+				label['Text'] = 'connect to server . . .'
+				label.color = connect_label_color
+				start_game(gameoptions = '-n %s %s' % (address, port))
+		elif [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events and ([LEFTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events or [RIGHTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events):
+			owner['selection'] = selected_net_address
+		elif [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
+			pass
+		else:
+			text_enter(keyboard, owner, scene.objects['label_net_port'])
+
+>>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 
 
 def init(cont):
