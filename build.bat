@@ -1,5 +1,8 @@
 @echo off
 
+set blender32=http://mirror.cs.umn.edu/blender.org/release/Blender2.75/blender-2.75-windows32.zip
+set blender64=http://mirror.cs.umn.edu/blender.org/release/Blender2.75/blender-2.75-windows64.zip
+
 rem add path for common tools
 set PATH=%PATH%;%CD%\softwares\win-utils
 
@@ -27,9 +30,9 @@ if exist blender.zip (
 ) else (
 	echo Downloading blender.
 	if %architecture% == 32 (
-		wget -nv --progress=bar http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.72/blender-2.72-windows32.zip -O blender.zip
+		wget -nv --progress=bar %blender32% -O blender.zip
 	) else (
-		wget -nv --progress=bar http://ftp.halifax.rwth-aachen.de/blender/release/Blender2.72/blender-2.72-windows64.zip -O blender.zip
+		wget -nv --progress=bar %blebder64% -O blender.zip
 	)
 )
 rem extract blender

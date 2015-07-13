@@ -1,6 +1,6 @@
-2.72	recommended
+2.72	old recommended
 2.73	crash at launch
 2.74	crash at launch
 2.75 rc1	bug on using bge module
 2.75 rc2	works (some FPS less than 2.72), but there is collision bugs with the cycle
-2.75	all works fine
+2.75	recommended
