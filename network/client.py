@@ -59,6 +59,7 @@ class Client(socket.socket):
 	
 	def step(self):
 		self.run = True
+		bge.logic.canstop += 1 # the game could not be stopped, except if canstop is equal to 0
 		end_step = time.time() + self.step_time
 		while time.time() < self.next_update and time.time() < end_step and self.run:
 			# recvfrom raise an error on no packet available
@@ -157,6 +158,7 @@ class Client(socket.socket):
 									self.send(b'getprop\0'+ obj.name.encode() +b'\0'+ propname.encode())
 			
 			self.next_update = time.time() + self.update_period
+		bge.logic.canstop -= 1
 		
 	
 	def thread_step(self):
@@ -192,6 +194,7 @@ def try_login(server, user, password):
 	except socket.timeout:
 		s.close()
 		return 'timeout error'
+	s.send(PACKET_STOP)
 	s.close()
 	if reponse == b'password accepted':
 		return ""
