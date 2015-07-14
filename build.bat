@@ -32,7 +32,7 @@ if exist blender.zip (
 	if %architecture% == 32 (
 		wget -nv --progress=bar %blender32% -O blender.zip
 	) else (
-		wget -nv --progress=bar %blebder64% -O blender.zip
+		wget -nv --progress=bar %blender64% -O blender.zip
 	)
 )
 rem extract blender
