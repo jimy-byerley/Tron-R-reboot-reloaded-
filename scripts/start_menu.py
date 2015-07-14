@@ -4,7 +4,6 @@ from bge.events import *
 from mathutils import *
 from math import *
 import os, sys, time, threading
-<<<<<<< HEAD
 
 # network module
 sys.path.append(bge.logic.expandPath('//../network'))
@@ -14,6 +13,12 @@ import client
 scene = bge.logic.getCurrentScene()
 armature = scene.objects['armature']
 cursor   = scene.objects['root_cursor']
+
+
+active_element = 'root'
+root_items = None
+root_item_selected = 3
+
 
 connect_label_color = scene.objects['connect_label'].color.copy()
 
@@ -34,11 +39,8 @@ connect_action_loop   = (889, 889)
 connect_to_server     = (889, 900)
 connect_download      = (900, 906)
 
-=======
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 
 def read_config():
-	## load global configuration file ##
 	try: f = open(bge.logic.expandPath("//../config.txt"), 'r')
 	except IOError:
 		print('config.txt not found, use default values instead.')
@@ -61,66 +63,6 @@ def read_config():
 			config[name] = eval(value)
 		return config
 
-<<<<<<< HEAD
-=======
-scene = bge.logic.getCurrentScene()
-armature = scene.objects['armature']
-cursor   = scene.objects['root_cursor']
-
-connect_label_color = scene.objects['connect_label'].color
-
-bge.render.showMouse(True)
-setExitKey(0)
-
-root_action_start = (25, 34)
-root_action_loop = (34, 633)
-title_start = (11, 35)
-settings_action_start = (701, 736)
-settings_action_loop = (736,736)
-settings_action_stop = (736,758)
-settings_holo_loop = (0,140)
-connect_action_start = (879,889)
-connect_action_loop = (889,889)
-
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
-
-def goto_menu_root():
-	armature.playAction('main', 
-		root_action_start[0], 
-		root_action_start[1], 
-		layer=1, 
-		play_mode=KX_ACTION_MODE_PLAY)
-	armature.playAction('main', 
-		root_action_loop[0], 
-		root_action_loop[1], 
-		layer=0, 
-		play_mode=KX_ACTION_MODE_LOOP)
-	armature.playAction('title', 
-		title_start[0], 
-		title_start[1], 
-		layer=3, 
-		play_mode=KX_ACTION_MODE_PLAY)	
-<<<<<<< HEAD
-
-def do_not():
-	pass
-=======
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
-
-def mouse_rotate_interface(cont):
-	owner = cont.owner
-	mouse = cont.sensors[0]
-	x = mouse.position[0] / bge.render.getWindowWidth() - 0.5
-	y = mouse.position[1] / bge.render.getWindowHeight() - 0.5
-	
-	armature.worldOrientation = Euler((-pi/12 * y, 0, -pi/12 * x))
-
-def mouse_over_item(cont):
-	mouseover = cont.sensors['Mouse']
-	owner = cont.owner
-	if mouseover.status == KX_SENSOR_JUST_ACTIVATED:
-		cursor.localPosition.y = owner.localPosition.y
-
 def start_game(blenderoptions='', gameoptions=''):
 	print('platform detected:', sys.platform)
 	config = read_config()
@@ -132,14 +74,9 @@ def start_game(blenderoptions='', gameoptions=''):
 		f = open(bge.logic.expandPath('//../blenderplayer_path.txt'), 'r')
 		blenderplayer = f.read()[:-1] +'/blenderplayer'
 		f.close()
-<<<<<<< HEAD
 		command = '%s -w %d %d %s %s - %s -l %s' % (
-=======
-		command = '%s -w %d %d %s  %s - %s -l %s' % (
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 			blenderplayer,
 			width, height,
-			blenderoptions, gameoptions,
 			bge.logic.expandPath('//main.blend'),
 			blenderoptions, gameoptions,
 			bge.logic.expandPath('//../backup-exemple.txt'),
@@ -153,7 +90,6 @@ def start_game(blenderoptions='', gameoptions=''):
 		command = '%s -w %d %d %s %s - %s -l %s' % (
 			blenderplayer,
 			width, height,
-			blenderoptions, gameoptions,
 			bge.logic.expandPath('//main.blend'),
 			blenderoptions, gameoptions,
 			bge.logic.expandPath('//..\\backup-exemple.txt'),
@@ -180,10 +116,10 @@ def start_online():
 		layer=0,
 		play_mode=KX_ACTION_MODE_LOOP)
 	# try to connect to server
-	address  = scene.objects['label_net_address']['Text']
-	port     = scene.objects['label_net_port']['Text']
-	username = scene.objects['label_net_user']['Text']
-	password = scene.objects['label_net_password']['Text']
+	address  = scene.objects['net_address']['Text']
+	port     = scene.objects['net_port']['Text']
+	username = scene.objects['net_user']['Text']
+	password = scene.objects['net_password']['Text']
 	reponse = client.try_login((address, int(port)), username, password)
 	if not reponse:
 		start_game(gameoptions = '-n %s %s %s %s' % (address, port, username, password))
@@ -203,46 +139,150 @@ def start_online():
 
 
 
-root_items = None
-root_item_selected = 3
+def do_not(): # just called on every logic step to assure that the threads will be actualized by the BGE
+	pass
 
-selected_root = 0
-selected_net_address = 1
-selected_net_port = 2
-<<<<<<< HEAD
-selected_net_user = 3
-selected_net_password = 4
-selected_properties = 5
+def mouse_rotate_interface(cont):
+	owner = cont.owner
+	mouse = cont.sensors[0]
+	x = mouse.position[0] / bge.render.getWindowWidth() - 0.5
+	y = mouse.position[1] / bge.render.getWindowHeight() - 0.5
+	
+	armature.worldOrientation = Euler((-pi/12 * y, 0, -pi/12 * x))
+
+def mouse_over_item(cont):
+	global root_item_selected, root_items
+	mouseover = cont.sensors['Mouse']
+	owner = cont.owner
+	if mouseover.status == KX_SENSOR_JUST_ACTIVATED:
+		root_item_selected = root_items.index(owner)
+		active_element = 'root'
+		cursor.setParent(owner)
+		cursor.localPosition = (0.65, -0.01, 0)
+		cursor.localOrientation = Euler((-pi/2, 0., 0.))
+	if mouseover.status in (KX_SENSOR_JUST_ACTIVATED, KX_SENSOR_ACTIVE) and mouseover.getButtonStatus(LEFTMOUSE) == KX_INPUT_JUST_ACTIVATED:
+		root_select()
+
+def mouse_over_entry(cont):
+	global active_element
+	mouseover = cont.sensors['Mouse']
+	if mouseover.status in (KX_SENSOR_JUST_ACTIVATED, KX_SENSOR_ACTIVE):
+		if cont.owner.parent: 
+			entry = cont.owner.parent
+			active_element = entry.name
+			cursor.setParent(entry)
+			cursor.localOrientation = Euler((-pi/2, 0., 0.))
+			cursor.localPosition = (entry['cursor']*0.5+0.4, 0, 0)    # for ubuntu condensed mono
+			#cursor.localPosition = (entry['cursor']*0.6+0.5, 0, 0)   # for standard monopsaced font
+
+def mouse_over_root(cont):
+	global active_element
+	mouseover = cont.sensors['Mouse']
+	if mouseover.status in (KX_SENSOR_JUST_ACTIVATED, KX_SENSOR_ACTIVE) and mouseover.getButtonStatus(LEFTMOUSE) == KX_INPUT_JUST_ACTIVATED:
+		root_deselect()
 
 
-####################
-# KEYBOARD CONTROL #
-####################
-=======
-selected_properties = 3
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 
-def keyboard_item(cont):
-	global root_items, root_item_selected
+def root_select():
+	global root_items, root_item_selected, active_element
+	if active_element == 'root':
+		name = root_items[root_item_selected].name
+		if name == "enter_local_grid":
+			start_game()
+		
+		elif name == "connect_to_server":
+			frame = armature.getActionFrame(0)
+			active_element = 'net_address'
+			armature.playAction('main', 
+				connect_action_start[0], 
+				connect_action_start[1], 
+				layer=1, 
+				play_mode=KX_ACTION_MODE_PLAY)
+			armature.playAction('main', 
+				connect_action_loop[1], 
+				connect_action_loop[1], 
+				layer=0, 
+				play_mode=KX_ACTION_MODE_LOOP)
+			scene.objects['connect_label']['Text'] = "ENTER SERVER ADDRESS"
+			scene.objects['connect_downloads'].visible = False
+				
+		elif name == "configure_settings":
+			frame = armature.getActionFrame(0)
+			if frame >= settings_action_loop[0] and frame <= settings_action_loop[1]:
+				armature.playAction('main', 
+					settings_action_stop[0], 
+					settings_action_stop[1], 
+					layer=1, 
+					play_mode=KX_ACTION_MODE_PLAY)
+				armature.playAction('main', 
+					root_action_loop[0], 
+					root_action_loop[1], 
+					layer=0, 
+					play_mode=KX_ACTION_MODE_LOOP)
+				scene.objects['hologram triangle'].visible = False
+			else:
+				armature.playAction('main', 
+					settings_action_start[0], 
+					settings_action_start[1], 
+					layer=1, 
+					play_mode=KX_ACTION_MODE_PLAY)
+				armature.playAction('main', 
+					settings_action_loop[0],
+					settings_action_loop[1],
+					layer=0, 
+					play_mode=KX_ACTION_MODE_LOOP)
+				armature.playAction('holo',
+					settings_holo_loop[0],
+					settings_holo_loop[1],
+					layer=4,
+					play_mode=KX_ACTION_MODE_LOOP)
+				scene.objects['hologram triangle'].visible = True
+
+		elif name == "quit_tronr":
+			bge.logic.endGame()
+
+def root_deselect():
+	global root_items, root_item_selected, active_element
+	if active_element != 'root':
+		active_element = 'root'
+		name = root_items[root_item_selected].name
+		if name == 'connect_to_server':
+			active_element = 'root'
+			armature.playAction('main', 
+				connect_action_start[1], 
+				connect_action_start[0], 
+				layer=1, 
+				play_mode=KX_ACTION_MODE_PLAY)
+			armature.playAction('main', 
+				root_action_loop[0], 
+				root_action_loop[1], 
+				layer=0, 
+				play_mode=KX_ACTION_MODE_LOOP)
+		if name == 'configure_settings':
+			armature.playAction('main', 
+				settings_action_start[0], 
+				settings_action_start[1], 
+				layer=1, 
+				play_mode=KX_ACTION_MODE_PLAY)
+			armature.playAction('main', 
+				settings_action_loop[0],
+				settings_action_loop[1],
+				layer=0, 
+				play_mode=KX_ACTION_MODE_LOOP)
+			armature.playAction('holo',
+				settings_holo_loop[0],
+				settings_holo_loop[1],
+				layer=4,
+				play_mode=KX_ACTION_MODE_LOOP)
+			scene.objects['hologram triangle'].visible = True
+
+
+def keyboard(cont):
+	global root_items, root_item_selected, active_element
 	keyboard = cont.sensors[0]
 	owner = cont.owner
 	
-	if root_items == None:
-		# sort items by position on Y
-		root_items = []
-		for child in armature.children:
-			if child != owner and "root_item" in child and child["root_item"] :
-				pos = child.localPosition.z
-				place = False
-				for i in range(len(root_items)):
-					if pos < root_items[i].localPosition.z:
-						root_items.insert(i, child)
-						place = True
-						break
-				if not place:
-					root_items.append(child)
-	
-	if owner['selection'] == selected_root:
+	if active_element == 'root':
 		# up and down keys are used to select items
 		if keyboard.getKeyStatus(UPARROWKEY) == KX_INPUT_JUST_ACTIVATED:
 			if root_item_selected < len(root_items)-1:  root_item_selected += 1
@@ -251,79 +291,17 @@ def keyboard_item(cont):
 			if root_item_selected > 0:  root_item_selected -= 1
 		
 		if keyboard.getKeyStatus(ENTERKEY) == KX_INPUT_JUST_ACTIVATED:
-			name = root_items[root_item_selected].name
-			if name == "enter_local_grid":
-				start_game()
-			elif name == "connect_to_server":
-				frame = armature.getActionFrame(0)
-				owner['selection'] = selected_net_address
-				armature.playAction('main', 
-					connect_action_start[0], 
-					connect_action_start[1], 
-					layer=1, 
-					play_mode=KX_ACTION_MODE_PLAY)
-				armature.playAction('main', 
-					connect_action_loop[1], 
-					connect_action_loop[1], 
-					layer=0, 
-					play_mode=KX_ACTION_MODE_LOOP)
-				scene.objects['connect_label']['Text'] = "ENTER SERVER ADDRESS"
-				scene.objects['connect_downloads'].visible = False
-					
-			elif name == "configure_settings":
-				frame = armature.getActionFrame(0)
-				if frame >= settings_action_loop[0] and frame <= settings_action_loop[1]:
-					armature.playAction('main', 
-						settings_action_stop[0], 
-						settings_action_stop[1], 
-						layer=1, 
-						play_mode=KX_ACTION_MODE_PLAY)
-					armature.playAction('main', 
-						root_action_loop[0], 
-						root_action_loop[1], 
-						layer=0, 
-						play_mode=KX_ACTION_MODE_LOOP)
-					scene.objects['hologram triangle'].visible = False
-				else:
-					armature.playAction('main', 
-						settings_action_start[0], 
-						settings_action_start[1], 
-						layer=1, 
-						play_mode=KX_ACTION_MODE_PLAY)
-					armature.playAction('main', 
-						settings_action_loop[0],
-						settings_action_loop[1],
-						layer=0, 
-						play_mode=KX_ACTION_MODE_LOOP)
-					armature.playAction('holo',
-						settings_holo_loop[0],
-						settings_holo_loop[1],
-						layer=4,
-						play_mode=KX_ACTION_MODE_LOOP)
-					scene.objects['hologram triangle'].visible = True
-			elif name == "quit_tronr":
-				bge.logic.endGame()
+			root_select()
 				
 		if len(root_items):
 			cursor.setParent(root_items[root_item_selected])
-			cursor.localPosition = (
-				0.65,
-<<<<<<< HEAD
-				-0.01,
-				0, #root_items[root_item_selected].localPosition.z
-				)
+			cursor.localPosition = (0.65,  -0.01,  0)
 			cursor.localOrientation = Euler((-pi/2, 0., 0.))
-=======
-				0.06,
-				0, #root_items[root_item_selected].localPosition.z
-				)
-			cursor.localOrientation = Euler((pi/2, 0., 0.))
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
 		keyboard.reset()
 	
-	elif owner['selection'] == selected_net_address:
+	elif active_element == 'net_address':
 		if [ESCKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
-			owner['selection'] = selected_root
+			active_element = 'root'
 			armature.playAction('main', 
 				connect_action_start[1], 
 				connect_action_start[0], 
@@ -335,13 +313,13 @@ def keyboard_item(cont):
 				layer=0, 
 				play_mode=KX_ACTION_MODE_LOOP)
 		elif [ENTERKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events or [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
-			owner['selection'] = selected_net_port
+			active_element = 'net_port'
 		else:
-			text_enter(keyboard, owner, scene.objects['label_net_address'])
+			text_enter(keyboard, owner, scene.objects['net_address'])
 	
-	elif owner['selection'] == selected_net_port:
+	elif active_element == 'net_port':
 		if keyboard.getKeyStatus(ESCKEY) == KX_INPUT_JUST_ACTIVATED:
-			owner['selection'] = selected_root
+			active_element = 'root'
 			armature.playAction('main', 
 				connect_action_start[1], 
 				connect_action_start[0], 
@@ -352,17 +330,16 @@ def keyboard_item(cont):
 				root_action_loop[1], 
 				layer=0, 
 				play_mode=KX_ACTION_MODE_LOOP)
-<<<<<<< HEAD
 		elif [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events and ([LEFTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events or [RIGHTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events):
-			owner['selection'] = selected_net_address
+			active_element = 'net_address'
 		elif [ENTERKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events or [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
-			owner['selection'] = selected_net_user
+			active_element = 'net_user'
 		else:
-			text_enter(keyboard, owner, scene.objects['label_net_port'])
+			text_enter(keyboard, owner, scene.objects['net_port'])
 
-	elif owner['selection'] == selected_net_user:
+	elif active_element == 'net_user':
 		if keyboard.getKeyStatus(ESCKEY) == KX_INPUT_JUST_ACTIVATED:
-			owner['selection'] = selected_root
+			active_element = 'root'
 			armature.playAction('main', 
 				connect_action_start[1], 
 				connect_action_start[0], 
@@ -374,15 +351,15 @@ def keyboard_item(cont):
 				layer=0, 
 				play_mode=KX_ACTION_MODE_LOOP)
 		elif [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events and ([LEFTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events or [RIGHTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events):
-			owner['selection'] = selected_net_port
+			active_element = 'net_port'
 		elif [ENTERKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events or  [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
-			owner['selection'] = selected_net_password
+			active_element = 'net_password'
 		else:
-			text_enter(keyboard, owner, scene.objects['label_net_user'])
+			text_enter(keyboard, owner, scene.objects['net_user'])
 
-	elif owner['selection'] == selected_net_password:
+	elif active_element == 'net_password':
 		if keyboard.getKeyStatus(ESCKEY) == KX_INPUT_JUST_ACTIVATED:
-			owner['selection'] = selected_root
+			active_element = 'root'
 			armature.playAction('main', 
 				connect_action_start[1], 
 				connect_action_start[0], 
@@ -399,46 +376,51 @@ def keyboard_item(cont):
 			t.run = start_online
 			t.start()
 		elif [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events and ([LEFTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events or [RIGHTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events):
-			owner['selection'] = selected_net_user
+			active_element = 'net_user'
 		elif [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
 			pass
 		else:
-			text_enter(keyboard, owner, scene.objects['label_net_password'])
-=======
-		elif [ENTERKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
-			# launch game with network connexion
-			label = scene.objects['connect_label']
-			address = scene.objects['label_net_address']['Text']
-			port = scene.objects['label_net_port']['Text']
-			if not port.isnumeric():
-				label['Text'] = 'bad port'
-				label.color = (1, 0.2, 0.2, 1)
-			else:
-				label['Text'] = 'connect to server . . .'
-				label.color = connect_label_color
-				start_game(gameoptions = '-n %s %s' % (address, port))
-		elif [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events and ([LEFTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events or [RIGHTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events):
-			owner['selection'] = selected_net_address
-		elif [TABKEY, KX_INPUT_JUST_ACTIVATED] in keyboard.events:
-			pass
-		else:
-			text_enter(keyboard, owner, scene.objects['label_net_port'])
-
->>>>>>> 96841ba514c28d9db8e760a541b1d995ec917727
+			text_enter(keyboard, owner, scene.objects['net_password'])
 
 
 def init(cont):
-	goto_menu_root()
+	global root_items, root_item_selected
+	if root_items == None:
+		# sort items by position on Y
+		root_items = []
+		for child in armature.children:
+			if child != cursor and "root_item" in child and child["root_item"] :
+				pos = child.localPosition.z
+				place = False
+				for i in range(len(root_items)):
+					if pos < root_items[i].localPosition.z:
+						root_items.insert(i, child)
+						place = True
+						break
+				if not place:
+					root_items.append(child)
+	armature.playAction('main', 
+		root_action_start[0], 
+		root_action_start[1], 
+		layer=1, 
+		play_mode=KX_ACTION_MODE_PLAY)
+	armature.playAction('main', 
+		root_action_loop[0], 
+		root_action_loop[1], 
+		layer=0, 
+		play_mode=KX_ACTION_MODE_LOOP)
+	armature.playAction('title', 
+		title_start[0], 
+		title_start[1], 
+		layer=3, 
+		play_mode=KX_ACTION_MODE_PLAY)	
 	
 
 def text_enter(keyboard, cursor, entry):
-	cursor.setParent(entry)
-	cursor.localPosition = (entry['cursor']*0.5+0.4, 0, 0)    # for ubuntu condensed mono
-	#cursor.localPosition = (entry['cursor']*0.6+0.5, 0, 0)   # for standard monopsaced font
-	cursor.localOrientation = Euler((-pi/2, 0., 0.))
 	# arrow keys to change cursor location
 	if keyboard.getKeyStatus(LEFTARROWKEY) == KX_INPUT_JUST_ACTIVATED:
 		if entry['cursor'] > 0: entry['cursor'] -= 1
+	
 	elif keyboard.getKeyStatus(RIGHTARROWKEY) == KX_INPUT_JUST_ACTIVATED:
 		if entry['cursor'] < len(entry['Text']): entry['cursor'] += 1
 
@@ -479,3 +461,9 @@ def text_enter(keyboard, cursor, entry):
 			text = entry['Text']
 			entry['Text'] = text[:place] + char + text[place:]
 			entry['cursor'] += 1
+	
+	if entry != cursor.parent:
+		cursor.setParent(entry)
+		cursor.localOrientation = Euler((-pi/2, 0., 0.))
+	cursor.localPosition = (entry['cursor']*0.5+0.4, 0, 0)    # for ubuntu condensed mono
+	#cursor.localPosition = (entry['cursor']*0.6+0.5, 0, 0)   # for standard monopsaced font
