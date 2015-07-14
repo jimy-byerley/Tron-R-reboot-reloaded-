@@ -1,4 +1,4 @@
-nickname      "kevin flynn"
+nickname      "Kevin Flynn"
 skin          "flynn"
 object_id     0
 window_width          1024

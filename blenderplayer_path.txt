@@ -1,1 +1,1 @@
-/usr/local/share/blender
+/home/jimy/programs/blender/blender-2.75-linux-glibc211-x86_64
