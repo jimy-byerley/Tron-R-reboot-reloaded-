@@ -4,18 +4,34 @@ import sys
 # use argv
 config_file = None
 game_file = None
+game_server = None
 
+# game arguments are passed after a '-'
 i = 0
-while sys.argv[i] != '-' and i < len(sys.argv) : i += 1
+while i < len(sys.argv) and sys.argv[i] != '-' : i += 1
+# analys all arguments
 i += 1
 while i < len(sys.argv):
 	arg = sys.argv[i]
 	if arg in ('-c', '--config'):
-		config_file = sys.argv[i+1]
+		if len(sys.argv) < i+2:
+			print('missing config file after -c or --config')
+		else:
+			config_file = sys.argv[i+1]
 		i += 1
 	elif arg in ('-l', '--load'):
-		game_file = sys.argv[i+1]
+		if len(sys.argv) < i+2:
+			print('missing game backup file after -l or --load')
+		else:
+			game_file = sys.argv[i+1]
 		i += 1
+	elif arg in ('-l', '--network'):
+		if len(sys.argv) < i+5:
+			print('missing server address, server port, username and password after -l or --network')
+		elif not sys.argv[i+2].isnumeric():
+			print('server port must be a positive integer')
+		else:
+			game_server = (sys.argv[i+1], int(sys.argv[i+2]), sys.argv[i+3], sys.argv[i+4])
 	else:
 		print('unknown argument', arg)
 		#bge.logic.endGame()
@@ -26,6 +42,7 @@ game_path = bge.logic.expandPath('//../')
 bge.logic.game_path = game_path
 
 sys.path.append(game_path+'scripts')
+sys.path.append(game_path+'network')
 sys.path.append(game_path+'mods')
 
 bge.logic.scene_path = game_path+'scenes'
