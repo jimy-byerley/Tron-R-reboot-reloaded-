@@ -62,7 +62,11 @@ To change game settings, edit config.txt file
 #### COMPATIBILITY
 
 OS platform: Linux (tested), Windows, but mabe maxOS should work too.
-Blender :  version >= 2.70  (made with blender 2.72)
-(Blender 2.72 is recomended because newer versions are crashing), see /blender-versions.txt for blender compatible versions
+Blender :  version >= 2.70  (made with blender 2.72 ans 2.75)
+(Blender 2.75 is recommended and Blender 2.72 was recomended because newer versions are crashing (except 2.75 of course)), see /blender-versions.txt for blender compatible versions
 
 bugs: jimy.byerley@gmail.com
+
+developement page: http://blenderartists.org/forum/showthread.php?362226-Tron-R-reboot-reloaded-An-open-source-openworld-of-tron
+
+facebook: http://m.facebook.com/profile.php?id=631385166999031
