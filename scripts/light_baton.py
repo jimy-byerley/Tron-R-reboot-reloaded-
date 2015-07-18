@@ -127,6 +127,13 @@ class LightBaton(Item):
 			thread.run = t
 			thread.start()
 		self.activate_date = time.time()
+	
+	def action2(self):
+		print(self.object['uniqid'])
+		obj = bge.logic.getCurrentScene().objects[self.object.name]
+		print(obj)
+		print(obj == self.object)
+		print(obj['uniqid'])
 
 
 def item_init():

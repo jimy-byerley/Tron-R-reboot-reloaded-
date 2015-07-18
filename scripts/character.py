@@ -27,6 +27,7 @@ import time
 import threading
 import special_characters
 import tools
+import client
 
 
 # to set True after game initialized
@@ -617,6 +618,9 @@ class Character(object) :
 			if "body helmet" in child:
 				self.body_helmet = child
 		self.box["class"] = self
+		# markup the network synchronisation for physics
+		self.box[client.marker_property_physic] = True
+		self.box[client.marker_property_property] = "('hp', 'active', 'move_speed')"
 		return self.box;
 
 
