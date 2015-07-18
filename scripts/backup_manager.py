@@ -60,6 +60,8 @@ properties_blacklist = ["class","repr","armature", "uniqid"]   # list of kx_obje
 properties_supported = [int, str, list, dict, set, float, bytes] # list ob kx_object properties types which can be serialized (can be extended by other modules)
 
 
+
+# standard function to get an 'object ID'.
 def get_object_id(kx_object):
 	""" 
 	Return the uniq ID of an object (character, item, ...) if the object's property
@@ -76,6 +78,13 @@ def get_object_id(kx_object):
 		kx_object["uniqid"] = i
 		max_id = max_id+1
 		return i
+
+def get_object_by_id(scene, id):
+	"""Return the first object (and normaly the only one) that have the uniqid id, or None."""
+	for i in range(len(scene.objects)):
+		if 'uniqid' in scene.objects[i] and scene.objects[i]['uniqid'] == id:
+			return scene.objects[i]
+	return None
 
 
 def dump_object(kx_object):
@@ -173,6 +182,53 @@ def dump_vehicle(kx_object):
 	return dump
 
 
+def dump_this(obj):
+	"""dump the object given, return the dump dict and store it in global variable last_backup. """
+	dump = obj[marker_property]
+	
+	if dump == "character":
+		dump = dump_character(obj)
+		loaded.append(dump['id'])
+		i = 0
+		while i < len(last_backup['characters']):
+			#pprint.pprint(last_backup['characters'][i])
+			if last_backup['characters'][i]['id'] == dump['id']:
+				last_backup['characters'].pop(i)
+			else: i += 1
+		last_backup['characters'].append(dump)
+		return dump
+	
+	elif dump == "vehicle":
+		dump = dump_vehicle(obj)
+		loaded.append(dump['id'])
+		last_backup['vehicles'].append(dump)
+		return dump
+	
+	elif dump == "item":
+		if not obj.parent or not (obj.parent.parent and "character" not in obj.parent) :
+			dump = dump_item(obj)
+			loaded.append(dump['id'])
+			i = 0
+			while i < len(last_backup['items']):
+				if last_backup['items'][i]['id'] == dump['id']:
+					last_backup['items'].pop(i)
+				else: i += 1
+			last_backup['items'].append(dump)
+			return dump
+	
+	elif dump == "object":
+		dump = dump_object(obj)
+		dump['name'] = obj.name
+		loaded.append(dump['id'])
+		i = 0
+		while i < len(last_backup['objects']):
+			if last_backup['objects'][i]['id'] == dump['id']:
+				last_backup['objects'].pop(i)
+			else: i += 1
+		last_backup['objects'].append(dump)
+		return dump
+
+
 def dump_all(scenestodump=['Scene']):
 	""" Dumps the game state (items, vehicles, characters, ...) """
 	global last_backup, loaded, thread_loader_running
@@ -188,45 +244,7 @@ def dump_all(scenestodump=['Scene']):
 		if scene.name in scenestodump:
 			for obj in scene.objects:
 				if marker_property in obj :
-					dump = obj[marker_property]
-					
-					if dump == "character":
-						dump = dump_character(obj)
-						loaded.append(dump['id'])
-						i = 0
-						while i < len(last_backup['characters']):
-							#pprint.pprint(last_backup['characters'][i])
-							if last_backup['characters'][i]['id'] == dump['id']:
-								last_backup['characters'].pop(i)
-							else: i += 1
-						last_backup['characters'].append(dump)
-					
-					elif dump == "vehicle":
-						dump = dump_vehicle(obj)
-						loaded.append(dump['id'])
-						last_backup['vehicles'].append(dump)
-					
-					elif dump == "item":
-						if not obj.parent or not (obj.parent.parent and "character" not in obj.parent) :
-							dump = dump_item(obj)
-							loaded.append(dump['id'])
-							i = 0
-							while i < len(last_backup['items']):
-								if last_backup['items'][i]['id'] == dump['id']:
-									last_backup['items'].pop(i)
-								else: i += 1
-							last_backup['items'].append(dump)
-					
-					elif dump == "object":
-						dump = dump_object(obj)
-						dump['name'] = obj.name
-						loaded.append(dump['id'])
-						i = 0
-						while i < len(last_backup['objects']):
-							if last_backup['objects'][i]['id'] == dump['id']:
-								last_backup['objects'].pop(i)
-							else: i += 1
-						last_backup['objects'].append(dump)
+					dump_this(obj)
 	
 	# remove last_backup IDs which are not in unloaded or in loaded objects
 	totalids = loaded+unloaded
@@ -239,6 +257,7 @@ def dump_all(scenestodump=['Scene']):
 	
 	last_backup['max id'] = max_id
 	thread_loader_running = False
+
 
 def configure_object(obj, params):
 	""" Apply an object dump (dump_object()) to an existing object. """
