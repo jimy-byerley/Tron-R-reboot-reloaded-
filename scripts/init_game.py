@@ -25,7 +25,7 @@ while i < len(sys.argv):
 		else:
 			game_file = sys.argv[i+1]
 		i += 1
-	elif arg in ('-l', '--network'):
+	elif arg in ('-n', '--network'):
 		if len(sys.argv) < i+5:
 			print('missing server address, server port, username and password after -l or --network')
 		elif not sys.argv[i+2].isnumeric():
@@ -56,6 +56,7 @@ import avatar
 import item
 import character
 import filters
+import client
 
 
 ## load global configuration file ##
@@ -86,6 +87,14 @@ bge.logic.config = config
 
 bge.logic.canstop = 0
 # when creating a thread, add 1 to this value, when thread ends, substract 1 to this value
+
+
+## connect to server ##
+
+if game_server:
+	address, port, user, password = game_server
+	bge.logic.client = client.Client((address, port))
+	bge.logic.client.authentify(user, password)
 
 ## load game backup (last in config file or specified in commandline) ##
 
@@ -120,6 +129,7 @@ else:
 root = scene.addObject("root", scene.active_camera)
 bge.logic.root = root
 bge.logic.bootloader = bge.logic.getCurrentController().owner
+if game_server: root['client'] = True
 
 # setup 2D filters
 for key in config.keys():
