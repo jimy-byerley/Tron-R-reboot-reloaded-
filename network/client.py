@@ -89,6 +89,10 @@ def try_login(server, user, password):
 def callback_thread_step():
 	bge.logic.client.thread_step()
 
+# simple callback, to call from an object to synchronize
+def synchronize(cont):
+	if hasattr(bge.logic, 'client'): bge.logic.client.synchronized.append(cont.owner)
+
 
 
 class Client(socket.socket):
@@ -120,8 +124,9 @@ class Client(socket.socket):
 		self.setblocking(False)
 	
 	def step(self):
+		if self.run: return   # don't allow multiple instances
 		self.run = True
-		bge.logic.canstop += 1 # the game could not be stopped, except if canstop is equal to 0
+		#bge.logic.canstop += 1 # the game could not be stopped, except if canstop is equal to 0
 		end_step = time.time() + self.step_time
 		while time.time() < self.next_update and time.time() < end_step and self.run:
 			# recvfrom raise an error on no packet available
@@ -160,8 +165,8 @@ class Client(socket.socket):
 						obj = bm.get_object_by_id(self.scene, id)
 						prop = propname.decode()
 						if obj:
-							if prop in self.scene.objects[ob] :
-								msg = b'setprop\0' + idbytes + b'\0'+ propname + b'\0' + pickle.dumps(self.scene.objects[ob][prop])
+							if prop in obj :
+								msg = b'setprop\0' + idbytes + b'\0'+ propname + b'\0' + pickle.dumps(obj[prop])
 								self.sendto(msg, host)
 						else:
 							self.send(b'unknown\0'+obname)
@@ -175,7 +180,7 @@ class Client(socket.socket):
 						if obj:
 							(obj.worldPosition,        obj.worldOrientation,
 							obj.worldLinearVelocity,  obj.worldAngularVelocity,
-							parent)     = pickle.loads(packet[9+len(obname):])
+							parent)     = pickle.loads(packet[9+len(idbytes):])
 							obj.setParent(parent)
 				
 				# packet of kind:    setprop.id.propertyname.dump   ('\0' instead if .)
@@ -186,7 +191,7 @@ class Client(socket.socket):
 						obj = bm.get_object_by_id(self.scene, id)
 						prop = propname.decode()
 						if obj and prop not in self.properties_blacklist:
-							try: self.scene.objects[ob][prop] = pickle.loads(packet[10+len(obname)+len(propname):])
+							try: obj[prop] = pickle.loads(packet[10+len(idbytes)+len(propname):])
 							except: pass
 				
 				# packet of kind:   changeid.IDsrc.IDdst
@@ -199,7 +204,8 @@ class Client(socket.socket):
 				
 				# packet of kind:    newobject.dumptype.dump
 				elif similar(packet, b'newobject\0') and zeros >= 2:
-					dumptype, dump = words[1:3]
+					dumptype = words[1]
+					dump = packet[12+len(dumptype):]
 					try: dump = pickle.loads(dump)
 					except: pass
 					else:
@@ -251,7 +257,8 @@ class Client(socket.socket):
 									self.send(b'getprop\0'+ str(bm.get_object_id(obj)).encode() +b'\0'+ propname.encode())
 			
 			self.next_update = time.time() + self.update_period
-		bge.logic.canstop -= 1
+		self.run = False
+		#bge.logic.canstop -= 1
 		
 	
 	def thread_step(self):
