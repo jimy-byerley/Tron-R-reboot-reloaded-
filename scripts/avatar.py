@@ -352,6 +352,19 @@ def mouse_input() :
 	x = (mx)*config.mouse.sensibility
 	y = (my)*config.mouse.sensibility
 
+	if y > math.pi/2:
+		y = math.pi/2
+		my -= sens.position[1] - WIN_MIDDLE_Y
+	elif y < -math.pi/2:
+		y = -math.pi/2
+		my -= sens.position[1] - WIN_MIDDLE_Y
+	if not first_player.isactive():
+		if x > math.pi/2:
+			x = math.pi/2
+			mx -= sens.position[0] - WIN_MIDDLE_X
+		elif x < -math.pi/2:
+			x = -math.pi/2
+			mx -= sens.position[0] - WIN_MIDDLE_X
 	first_player.lookAt(mathutils.Euler((0, y, -x)))
 
 	Rasterizer.setMousePosition(WIN_MIDDLE_X, WIN_MIDDLE_Y)

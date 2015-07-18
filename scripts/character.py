@@ -781,6 +781,7 @@ class Character(object) :
 			t = -HALFPI
 		else :
 			t = diff
+		rotEuler.y = max(min(rotEuler.y, HALFPI), -HALFPI)
 		self.skin.lookAt(mathutils.Euler((0, rotEuler.y, t)))
 		self.camera_head.localOrientation = mathutils.Euler((0, rotEuler.y, t + HALFPI))
 		self.takeWay(o)
