@@ -47,6 +47,8 @@ class obdata:
 	properties = {}     # dumps of game object properties of the object, only references properties are inside.
 	                    # properties names are bytes (for optimisation)
 	                    # property take value ignore (see class below) when sync is imminent the first time.
+	dump_type = b''     # dump type (see backup manager), if dump is used.
+	dump = b''          # optionnal pickle dump of the object (if was not in the backup file at start).
 
 class ignore:
 	pass
@@ -72,7 +74,7 @@ class Server(socket.socket):
 	
 	run       = False      # put it to False to stop the server
 	hosts     = []         # list of connected hosts
-	datas     = {}         # list of obdatas indexed by object name (bytes for optimisation)
+	datas     = {}         # list of obdatas indexed by object id's (bytes for optimisation)
 	thread    = None       # actual thread of the server
 	order     = []         # priority of trusting for each host, first in the list are the most trusted
 	delays    = {}         # list of date to take count of hosts packets (indexed by host)
@@ -119,82 +121,109 @@ class Server(socket.socket):
 		end_step = time.time() + self.step_time
 		while time.time() < self.next_update and time.time() < end_step and self.run :
 			# thread client requests
-			try:    packet, host = self.recvfrom(self.packet_size)
-			except socket.error or BlockingIOError: time.sleep(0.001)
-			else:
+			try:    
+				packet, host = self.recvfrom(self.packet_size)
 				# wait for quicked or delayed hosts (bad password for exemple)
 				while host in self.delays and time.time() < self.delays[host]:
 					packet, host = recvfrom(self.packet_size)
-		
+			except socket.error or BlockingIOError: time.sleep(0.001)
+			else:
 				print(self.hosts)
 				# no communication with a not identified host
 				if host in self.hosts:
 					index = self.hosts.index(host)
 					# count number of '\0' in the packet, it indicates the minimal number of words in the packet
-					zeros = packet.count(b'\0')
+					words = packet.split(b'\0')
+					zeros = len(words)
 					if similar(packet, b'getmeca\0') and zeros >= 1:
-						obname = packet.split(b'\0')[1]
-						if obname in self.datas:
-							data = self.datas[obname]
+						obid = words[1]
+						if obid in self.datas:
+							data = self.datas[obid]
 							if data.physics:
 								# if origin of the sync is updated by the sync, the object is frozen
 								if index != data.host:
-									msg = b'setmeca\0' + obname + b'\0' + data.physics
+									msg = b'setmeca\0' + obid + b'\0' + data.physics
 									self.sendto(msg, host)
 							else:
-								self.datas[obname].physics = None
+								self.datas[obid].physics = None
 						else:
-							self.datas[obname] = obdata()
-							self.datas[obname].physics = None
+							self.datas[obid] = obdata()
+							self.datas[obid].physics = None
 						self.answering_clients[index] = True
 					
 					elif similar(packet, b'getprop\0') and zeros >= 2:
-						obname, propname = packet.split(b'\0')[1:3]
-						if obname in self.datas:
-							if propname in self.datas[obname].properties :
+						obid, propname = words[1:3]
+						if obid in self.datas:
+							if propname in self.datas[obid].properties :
 								# if origin of the sync is updated by the sync, the object is frozen
-								if index != self.datas[obname].host and self.datas[obname].properties[propname] != ignore:
-									msg = b'setprop\0' + obname + b'\0'+ propname + b'\0' + self.datas[obname].properties[propname]
+								if index != self.datas[obid].host and self.datas[obid].properties[propname] != ignore:
+									msg = b'setprop\0' + obid + b'\0'+ propname + b'\0' + self.datas[obid].properties[propname]
 									self.sendto(msg, host)
 							else: 
-								self.datas[obname].properties[propname] = ignore
+								self.datas[obid].properties[propname] = ignore
 						else: 
-							self.datas[obname] = obdata()
-							self.datas[obname].properties[propname] = ignore
+							self.datas[obid] = obdata()
+							self.datas[obid].properties[propname] = ignore
 						self.answering_clients[index] = True
 					
 					elif similar(packet, b'unknown\0') and zeros >= 1:
-						obname = packet.split(b'\0')[1]
-						if obname in self.datas and index == self.datas[obname].host:
-							self.datas[obname].host = None
+						obid = words[1]
+						if obid in self.datas and index == self.datas[obid].host:
+							self.datas[obid].host = None
 							data.host = None
 					
-					# packet of kind:    setmeca.name.dump  ('\0' instead of .)
+					# packet of kind:    setmeca.id.dump  ('\0' instead of .)
 					elif similar(packet, b'setmeca\0') and zeros >= 1: 
-						obname = packet.split(b'\0')[1]
-						if obname in self.datas:
-							data = self.datas[obname]
+						obid = words[1]
+						if obid in self.datas:
+							data = self.datas[obid]
 							# if this host is more trusted, this host will be in charge of this data
 							if data.host == None or data.host <= index:
 								data.updated = True
 								data.host = index
-								data.physics = packet[9+len(obname):]
-								self.datas[obname] = data
+								data.physics = packet[9+len(obid):]
+								self.datas[obid] = data
 					
-					# packet of kind:    setprop.name.propertyname.dump   ('\0' instead if .)
+					# packet of kind:    setprop.id.propertyname.dump   ('\0' instead if .)
 					elif similar(packet, b'setprop\0') and zeros >= 2:
-						obname, propname = packet.split(b'\0')[1:3]
-						if obname in self.datas:
-							data = self.datas[obname]
+						obid, propname = words[1:3]
+						if obid in self.datas:
+							data = self.datas[obid]
 							# if this host is more trusted, this host will be in charge of this data
 							if data.host == None or data.host <= index:
 								data.updated = True
 								data.host = index
-								data.properties[propname] = packet[10+len(obname)+len(propname):]
-								self.datas[obname] = data
+								data.properties[propname] = packet[10+len(obid)+len(propname):]
+								self.datas[obid] = data
+					
+					# packet of kind:    newobject.dumptype.dump
+					elif similar(packet, b'newobject\0') and zeros >= 2:
+						dumptype, dump  = words[1:3]
+						try: dump = pickle.loads(dump)
+						except: pass
+						else:
+							if 'id' in dump:
+								original = dump['id']
+								# search for an higher ID
+								id = original
+								for key in self.datas.keys():
+									if key.isdigit() and int(key) >= id:
+										id = int(key) + 1
+								dump['id'] = id
+								# save object dump
+								data = obdata()
+								data.physics   = pickle.dumps((dump['pos'], dump['rot'], dump['velocity'], dump['angular']))
+								self.datas['id'] = data
+								# send to all client the information of a new object
+								reponse = b'newobject\0'+ dumptype +b'\0'+ pickle.dumps(dump)
+								for h in self.hosts:
+									if h != host: self.send(reponse, host)
+								# change ID on client if necessary
+								if original != id: self.send(b'changeid\0'+ original +b'\0'+ id, host)
 						
 					
 					elif similar(packet, PACKET_STOP):
+						debugmsg('client (%s, %d) is quitting' % host)
 						self.remove_client(host)
 					
 					else:
@@ -340,7 +369,7 @@ class Server(socket.socket):
 			self.num_client -= 1
 			self.cleared_index.append(index)
 			for user in self.users:
-				if host in self.users[user]: self.users[user].pop(self.users[user].find(host))
+				if host in self.users[user]: self.users[user].pop(self.users[user].index(host))
 			return index
 		else:
 			return -1
