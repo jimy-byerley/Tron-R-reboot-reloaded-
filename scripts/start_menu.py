@@ -6,6 +6,7 @@ from math import *
 import os, sys, time, threading
 
 # network module
+sys.path.append(bge.logic.expandPath('//../scripts'))
 sys.path.append(bge.logic.expandPath('//../network'))
 import client
 
@@ -122,7 +123,19 @@ def start_online():
 	password = scene.objects['net_password']['Text']
 	reponse = client.try_login((address, int(port)), username, password)
 	if not reponse:
-		start_game(gameoptions = '-n %s %s %s %s' % (address, port, username, password))
+		start_game(gameoptions = "-n %s %s '%s' '%s'" % (address, port, username, password))
+		armature.playAction('main', 
+			connect_to_server[1], 
+			connect_to_server[0], 
+			layer=1, 
+			play_mode=KX_ACTION_MODE_PLAY)
+		armature.playAction('main', 
+			connect_action_loop[1], 
+			connect_action_loop[1], 
+			layer=0, 
+			play_mode=KX_ACTION_MODE_LOOP)
+		label['Text'] = 'enter server address'
+		label.color = connect_label_color
 	else:
 		armature.playAction('main', 
 			connect_to_server[1], 
