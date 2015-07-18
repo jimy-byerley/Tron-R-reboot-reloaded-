@@ -68,7 +68,7 @@ class Server(socket.socket):
 	update_period        = 0.1     # maximum time (s) between 2 server update communication (update of client datas)
 	step_time            = 0.2     # maximum time in execution of each step
 	bad_password_timeout = 3       # time the client should wait when get a wrong password (second)
-	multiple_sessions    = True    # set to True, allow multiple host to use the same user (account and password)
+	multiple_sessions    = False   # set to True, allow multiple host to use the same user (account and password)
 	registeration        = True    # set to True, allow new users to be created
 	username_conformity  = username_conformity_off # function to call to test a new username (valid or not)
 	
@@ -128,7 +128,6 @@ class Server(socket.socket):
 					packet, host = recvfrom(self.packet_size)
 			except socket.error or BlockingIOError: time.sleep(0.001)
 			else:
-				print(self.hosts)
 				# no communication with a not identified host
 				if host in self.hosts:
 					index = self.hosts.index(host)
@@ -198,7 +197,8 @@ class Server(socket.socket):
 					
 					# packet of kind:    newobject.dumptype.dump
 					elif similar(packet, b'newobject\0') and zeros >= 2:
-						dumptype, dump  = words[1:3]
+						dumptype = words[1]
+						dump = packet[12+len(dumptype):]
 						try: dump = pickle.loads(dump)
 						except: pass
 						else:
@@ -257,7 +257,7 @@ class Server(socket.socket):
 						
 						# user should be created
 						if password == self.passwords[user]:
-							if host in self.hosts and not self.multiple_sessions:
+							if host in self.hosts and len(self.users[host]) > 1 and not self.multiple_sessions:
 								debugmsg('an other session for host %s refused.' % host[0])
 								self.sendto(subject + b'multisession not allowed', host)
 							if self.num_client >= self.max_client:
