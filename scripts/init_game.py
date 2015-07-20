@@ -32,6 +32,7 @@ while i < len(sys.argv):
 			print('server port must be a positive integer')
 		else:
 			game_server = (sys.argv[i+1], int(sys.argv[i+2]), sys.argv[i+3], sys.argv[i+4])
+		i += 4
 	else:
 		print('unknown argument', arg)
 		#bge.logic.endGame()
@@ -95,6 +96,8 @@ if game_server:
 	address, port, user, password = game_server
 	bge.logic.client = client.Client((address, port))
 	bge.logic.client.authentify(user, password)
+else: 
+	bge.logic.client = None
 
 ## load game backup (last in config file or specified in commandline) ##
 
@@ -111,13 +114,23 @@ if game_file:
 scene = bge.logic.getCurrentScene()
 fp_dump = None
 if game_file:
-	for dump in backup_manager.last_backup['characters']:
-		if dump['id'] == config['object_id']:
-			fp_dump = dump
+	if game_server:
+		# in LAN game, the character must take a different name from others bots and players
+		for dump in backup_manager.last_backup['characters']:
+			if dump['name'] == game_server[2]:
+				fp_dump = dump
+	else:
+		# in local game, the character can take the name he wants, so the config file use the object ID to avoid confusion with a bot with the same name
+		for dump in backup_manager.last_backup['characters']:
+			if dump['id'] == config['object_id']:
+				fp_dump = dump
 
 if fp_dump == None :
 	spawner = scene.addObject("first player spawn", scene.active_camera)
-	spawner['character_name'] = config['nickname']
+	if game_server:
+		spawner['character_name'] = game_server[2]
+	else:
+		spawner['character_name'] = config['nickname']
 	spawner['skin'] = config['skin']
 else:
 	scene.active_camera.worldPosition = fp_dump['pos']
