@@ -2,6 +2,7 @@ import bge
 from bge.logic import *
 from bge.events import *
 from mathutils import *
+import aud
 from math import *
 import os, sys, time, threading
 
@@ -14,7 +15,8 @@ import client
 scene = bge.logic.getCurrentScene()
 armature = scene.objects['armature']
 cursor   = scene.objects['root_cursor']
-
+sound_path = expandPath('//../sounds')
+audio = aud.device()
 
 active_element = 'root'
 root_items = None
@@ -175,6 +177,10 @@ def mouse_over_item(cont):
 		cursor.setParent(owner)
 		cursor.localPosition = (0.65, -0.01, 0)
 		cursor.localOrientation = Euler((-pi/2, 0., 0.))
+		# play sound
+		sound = aud.Factory(sound_path+'/share/interface-rollover.mp3')
+		audio.volume = 0.1
+		audio.play(sound)
 	if mouseover.status in (KX_SENSOR_JUST_ACTIVATED, KX_SENSOR_ACTIVE) and mouseover.getButtonStatus(LEFTMOUSE) == KX_INPUT_JUST_ACTIVATED:
 		root_select()
 
@@ -189,6 +195,10 @@ def mouse_over_entry(cont):
 			cursor.localOrientation = Euler((-pi/2, 0., 0.))
 			cursor.localPosition = (entry['cursor']*0.5+0.4, 0, 0)    # for ubuntu condensed mono
 			#cursor.localPosition = (entry['cursor']*0.6+0.5, 0, 0)   # for standard monopsaced font
+		# play sound
+		sound = aud.Factory(sound_path+'/share/interface-rollover.mp3')
+		audio.volume = 0.1
+		audio.play(sound)
 
 def mouse_over_root(cont):
 	global active_element
@@ -200,7 +210,7 @@ def mouse_over_root(cont):
 
 def root_select():
 	global root_items, root_item_selected, active_element
-	if active_element == 'root':
+	if active_element == 'root':		
 		name = root_items[root_item_selected].name
 		if name == "enter_local_grid":
 			start_game()
@@ -255,10 +265,14 @@ def root_select():
 
 		elif name == "quit_tronr":
 			bge.logic.endGame()
+		# play sound
+		sound = aud.Factory(sound_path+'/share/menu-button.mp3')
+		audio.volume = 0.3
+		audio.play(sound)
 
 def root_deselect():
 	global root_items, root_item_selected, active_element
-	if active_element != 'root':
+	if active_element != 'root':		
 		active_element = 'root'
 		name = root_items[root_item_selected].name
 		if name == 'connect_to_server':
@@ -290,6 +304,10 @@ def root_deselect():
 				layer=4,
 				play_mode=KX_ACTION_MODE_LOOP)
 			scene.objects['hologram triangle'].visible = True
+			# play sound
+			sound = aud.Factory(sound_path+'/share/menu-button.mp3')
+			audio.volume = 0.3
+			audio.play(sound)
 
 
 def keyboard(cont):
@@ -298,6 +316,10 @@ def keyboard(cont):
 	owner = cont.owner
 	
 	if active_element == 'root':
+		# play sound
+		sound = aud.Factory(sound_path+'/share/interface-rollover.mp3')
+		audio.volume = 0.1
+		audio.play(sound)
 		# up and down keys are used to select items
 		if keyboard.getKeyStatus(UPARROWKEY) == KX_INPUT_JUST_ACTIVATED:
 			if root_item_selected < len(root_items)-1:  root_item_selected += 1
@@ -482,3 +504,8 @@ def text_enter(keyboard, cursor, entry):
 		cursor.localOrientation = Euler((-pi/2, 0., 0.))
 	cursor.localPosition = (entry['cursor']*0.5+0.4, 0, 0)    # for ubuntu condensed mono
 	#cursor.localPosition = (entry['cursor']*0.6+0.5, 0, 0)   # for standard monopsaced font
+	
+	# play sound
+	sound = aud.Factory(sound_path+'/share/interface-rollover.mp3')
+	audio.volume = 0.1
+	audio.play(sound)
