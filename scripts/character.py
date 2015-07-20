@@ -559,8 +559,8 @@ class Character(object) :
 	def __repr__(self) :
 		return "%s(name=%s, skin_name=%s)" % (self.__class__.__name__, repr(self.name), repr(self.skin_name))
 
-	def spawn(self, ref, existing=None) :
-		scene = bge.logic.getCurrentScene();
+	def spawn(self, ref=None, existing=None) :
+		scene = bge.logic.getCurrentScene()
 		if not existing:
 			self.box = scene.addObject("player collision", ref)
 		else:
@@ -749,8 +749,8 @@ class Character(object) :
 	def drop(self) :
 		self.skin.drop()
 
+	# item est un KX_GameObject, une chaine ou un numero (attention, le numero 0 signifie la main)
 	def wieldItem(self, item, wait=False) :
-		# item est un KX_GameObject, une chaine ou un numero (attention, le numero 0 signifie la main)
 		if time.time() >= self.itemtoggle_date + 0.5 : # éviter les répétitions trop rapides des touches
 			self.itemtoggle_date = time.time()
 			self.skin.wieldItem(item, wait=wait)
