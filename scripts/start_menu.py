@@ -83,7 +83,9 @@ def start_game(blenderoptions='', gameoptions=''):
 			bge.logic.expandPath('//../backup-exemple.txt'),
 		)
 		print(command)
+		scene.suspend()
 		os.system(command)
+		scene.resume()
 	elif sys.platform in ('win', 'win32', 'win64'):
 		f = open(bge.logic.expandPath('//..\\blenderplayer_path.txt'), 'r')
 		blenderplayer = f.read()[:-1] +'\\blenderplayer'
