@@ -45,6 +45,8 @@ class Avatar(character.Character) :
 				self.overlay = scene
 		self.box["first player"] = True
 		scene.addObject("skybox", ref)
+		i = backup_manager.get_object_id(self.box)
+		
 
 	def setHp(self, hp) :
 		pass
