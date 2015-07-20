@@ -114,7 +114,7 @@ def thread_loader():
 			print("module \"%s\": load scene \"%s\" ..." % (__name__, libname))
 			bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=load_async)
 			if load_async: time.sleep(2)
-			time.sleep(1)
+			#time.sleep(1)
 		
 		elif (not to_load[i]) and (libname in liblist) :
 			#print("module \"%s\": unload scene \"%s\" ..." % (__name__, libname))
