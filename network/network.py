@@ -134,7 +134,21 @@ class Server(socket.socket):
 					# count number of '\0' in the packet, it indicates the minimal number of words in the packet
 					words = packet.split(b'\0')
 					zeros = len(words)
-					if similar(packet, b'getmeca\0') and zeros >= 1:
+					
+					# global synchronization request
+					if similar(packet, b'requestsync\0'):
+						self.answering_clients[index] = True
+						for id in self.datas:
+							data = self.datas[id]
+							if data.host != index:
+								if data.physics:
+									self.sendto(b'setmeca\0'+ id +b'\0'+ data.physics, host)
+								for property in data.properties:
+									if data.properties[property] != ignore:
+										self.sendto(b'setprop\0'+ id +b'\0'+ property +b'\0'+ data.properties[property], host)
+					
+					elif similar(packet, b'getmeca\0') and zeros >= 1:
+						self.answering_clients[index] = True
 						obid = words[1]
 						if obid in self.datas:
 							data = self.datas[obid]
@@ -148,9 +162,9 @@ class Server(socket.socket):
 						else:
 							self.datas[obid] = obdata()
 							self.datas[obid].physics = None
-						self.answering_clients[index] = True
 					
 					elif similar(packet, b'getprop\0') and zeros >= 2:
+						self.answering_clients[index] = True
 						obid, propname = words[1:3]
 						if obid in self.datas:
 							if propname in self.datas[obid].properties :
@@ -163,7 +177,6 @@ class Server(socket.socket):
 						else: 
 							self.datas[obid] = obdata()
 							self.datas[obid].properties[propname] = ignore
-						self.answering_clients[index] = True
 					
 					elif similar(packet, b'unknown\0') and zeros >= 1:
 						obid = words[1]
@@ -289,22 +302,22 @@ class Server(socket.socket):
 		
 		
 		if time.time() < end_step and self.run:
-			for name in self.datas:
-				self.datas[name].updated = None
-				data = self.datas[name] # set marker to false, to detect if client doesn't answer
+			for id in self.datas:
+				self.datas[id].updated = None
+				data = self.datas[id] # set marker to false, to detect if client doesn't answer
 				packets = [] # list of packets to send to clients concerned by this object
 				
 				# maybe send a maximal sized packet of data to unknown hosts (big packet to make a DOS on the machine thaht try to make one)
 				
 				if data.physics != False :
-					packets.append(b'getmeca\0'+ name +b'\0')
+					packets.append(b'getmeca\0'+ id +b'\0')
 				if data.properties :
 					for prop in data.properties:
-						packets.append(b'getprop\0'+ name +b'\0'+ prop +b'\0')
+						packets.append(b'getprop\0'+ id +b'\0'+ prop +b'\0')
 				# else, send request to this client and more trusted clients
-				if data.host and self.hosts[data.host]:
+				if self.hosts[data.host]:
 					for packet in packets:
-						for i in range(data.host+1):
+						for i in range(data.host+1): # include the host provider
 							host = self.hosts[i]
 							if host and self.answering_clients[i]: self.sendto(packet, host)
 				# if an host is disconnected or away from this object take an other host

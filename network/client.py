@@ -91,7 +91,16 @@ def callback_thread_step():
 
 # simple callback, to call from an object to synchronize
 def synchronize(cont):
-	if hasattr(bge.logic, 'client'): bge.logic.client.synchronized.append(cont.owner)
+	owner = cont.owner
+	if hasattr(bge.logic, 'client'):
+		if marker_property_physic in owner and owner[marker_property_physic]:
+			bge.logic.client.sync_physic(owner)
+		if marker_property_property in owner:
+			props = owner[marker_property_property]
+			if type(props) == str:
+				props = owner[marker_property_property] = props.split()
+			for prop in props:
+				if prop in owner: bge.logic.client.sync_property(owner, prop)
 
 
 
@@ -102,7 +111,6 @@ class Client(socket.socket):
 	# extendable list of properties to exclude of syncs (to avod security breachs)
 	properties_blacklist = ["class","repr","armature", "uniqid", marker_property_physic, marker_property_property]
 	
-	synchronized = []        # list of objects to synchronize
 	next_update  = 0         # next time to ask the server for update informations
 	run          = False     # put it to False to stop the client execution stepn (automaticaly set to True on step start
 	
@@ -177,11 +185,23 @@ class Client(socket.socket):
 					if idbytes.isdigit():
 						id = int(idbytes)
 						obj = bm.get_object_by_id(self.scene, id)
+						physics = pickle.loads(packet[9+len(idbytes):])
+						# modify in game object
 						if obj:
 							(obj.worldPosition,        obj.worldOrientation,
 							obj.worldLinearVelocity,  obj.worldAngularVelocity,
-							parent)     = pickle.loads(packet[9+len(idbytes):])
-							obj.setParent(parent)
+							parent)     = physics
+							#obj.setParent(parent)
+						# modify game backup
+						if id in bm.unloaded:
+							for data in ('character', 'item', 'vehicle', 'object'):
+								for dump in bm.last_backup[data]:
+									if dump['id'] == id:
+										( # normally, the table can be used as a pointer
+											dump['pos'],      dump['orient'],
+											dump['velocity'], dump['angular'],
+										) = physics
+										break
 				
 				# packet of kind:    setprop.id.propertyname.dump   ('\0' instead if .)
 				elif similar(packet, b'setprop\0') and zeros >= 2:
@@ -190,9 +210,20 @@ class Client(socket.socket):
 						id = int(idbytes)
 						obj = bm.get_object_by_id(self.scene, id)
 						prop = propname.decode()
-						if obj and prop not in self.properties_blacklist:
-							try: obj[prop] = pickle.loads(packet[10+len(idbytes)+len(propname):])
+						if prop not in self.properties_blacklist:
+							try: data = pickle.loads(packet[10+len(idbytes)+len(propname):])
 							except: pass
+							else:
+								# modify in game object
+								if obj: obj[prop] = data
+								# modify game backup
+								if id in bm.unloaded:
+									for data in ('character', 'item', 'vehicle', 'object'):
+										for dump in bm.last_backup[data]:
+											if dump['id'] == id:
+												# normaly the table can be used as a pointer
+												dump['properties'][prop] = data
+												break
 				
 				# packet of kind:   changeid.IDsrc.IDdst
 				elif similar(packet, b'changeid\0') and zeros >= 2:
@@ -239,23 +270,7 @@ class Client(socket.socket):
 		
 		
 		if end_step > time.time() and self.run:
-			for obj in self.synchronized:
-				if obj :
-					if marker_property_physic in obj and obj[marker_property_physic]:
-						self.send(b'getmeca\0'+ str(bm.get_object_id(obj)).encode())
-					if marker_property_property in obj:
-						ok=True
-						if type(obj[marker_property_property]) == str:
-							try: obj[marker_property_property] = obj[marker_property_property].split()
-							except:
-								print("client.step: error on loading marker for network sync (property '%s') on object '%s', delete property." % (marker_property_property, obj.name))
-								del obj[marker_property_property]
-								ok=False
-						if ok:
-							for propname in obj[marker_property_property]:
-								if propname not in self.properties_blacklist:
-									self.send(b'getprop\0'+ str(bm.get_object_id(obj)).encode() +b'\0'+ propname.encode())
-			
+			self.send(b'requestsync\0')
 			self.next_update = time.time() + self.update_period
 		self.run = False
 		#bge.logic.canstop -= 1
@@ -270,6 +285,15 @@ class Client(socket.socket):
 		self.username = username or self.username
 		self.password = password or self.password
 		self.sendto(b'authentify\0'+ self.username.encode() +b'\0'+ self.password.encode(), self.remote)
+	
+	# tell the server to synchronize the object physic properties
+	def sync_physic(self, object):
+		self.send(b'getmeca\0'+ str(bm.get_object_id(object)).encode())
+	
+	# tell the server th synchronize the object property (given by name)
+	def sync_property(self, object, property):
+		self.send(b'getprop\0'+ str(bm.get_object_id(object)).encode() +b'\0'+ property.encode())
+		
 	
 	# clear the socket's queue, return the list of packet received
 	def clear_requests(self):
