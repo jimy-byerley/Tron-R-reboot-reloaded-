@@ -92,7 +92,7 @@ def callback_thread_step():
 # simple callback, to call from an object to synchronize
 def synchronize(cont):
 	owner = cont.owner
-	if hasattr(bge.logic, 'client'):
+	if hasattr(bge.logic, 'client') and bge.logic.client:
 		if marker_property_physic in owner and owner[marker_property_physic]:
 			bge.logic.client.sync_physic(owner)
 		if marker_property_property in owner:
