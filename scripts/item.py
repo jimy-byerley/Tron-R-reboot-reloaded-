@@ -52,8 +52,8 @@ def just_spawn(rule, params):
 	if libname not in bge.logic.LibList():
 		print("module \"%s\": load item library: %s ..." % (__name__, repr(libname)))
 		bge.logic.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=load_async)
-		if load_async: time.sleep(2)
-		time.sleep(0.5)
+		#if load_async: time.sleep(2)
+		#time.sleep(0.5)
 		#tools.LibLoad(libname, "Scene", load_actions=True, load_scripts=True, async=True)
 	scene = bge.logic.getCurrentScene()
 	obj = scene.addObject(rule[NAME], scene.active_camera)
