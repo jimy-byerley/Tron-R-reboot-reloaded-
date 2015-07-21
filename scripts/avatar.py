@@ -134,8 +134,17 @@ class Avatar(character.Character) :
 		self.updateItemOverlay()
 		character.Character.actionItem(self, action)
 		self.updateItemOverlay()
-		
-		
+	
+	# internal methode: send sync informations, given as bytes and the python data
+	def syncInfo(self, info, data):
+		if self.sync_times[info] > time.time():
+			if type(data) == int:      data = str(data).encode()
+			elif type(data) == bytes:  pass
+			else                       data = pickle.dumps(data)
+			# similar to Character class's method, but use the marker 'avatar\0' instead of 'character\0'
+			bge.logic.client.queue.append(b'avatar\0'+info+b'\0'+str(bm.get_object_id(self.box)).encode()+'\0'+data)
+			self.sync_times[info] = time.time() + bge.logic.client.update_period
+
 
 first_player = None
 
