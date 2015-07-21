@@ -807,16 +807,18 @@ class Character(OfflineCharacter):
 	* updateRunning
 	* drop
 	* click
+	* helmet
 	* wieldItem
 	"""
-	sync_times = {}    # list of next times to send sync info to the server, indexed by info name as bytes.
+	# list of next times to send sync info to the server, indexed by info name as bytes.
+	sync_times = {b'look':0., b'way':0., b'jump':0., b'run':0., b'drop':0., b'click':0., b'helmet':0., b'wield':0.}
 	
 	def spawn(self, ref=None, existing=None):
 		OfflineCharacter.spawn(self, ref, existing)
 		client = bge.logic.client
 		if client:
 			# configure client<->server sync exchange
-			if client_callack not in client.callbacks: client.callbacks.append(client_callback)
+			if client_callback not in client.callbacks: client.callbacks.append(client_callback)
 			client.sync_physic(self.box)
 			client.sync_property(self.box, 'active')
 			client.sync_property(self.box, 'move speed')
@@ -827,7 +829,7 @@ class Character(OfflineCharacter):
 		if self.sync_times[info] > time.time():
 			if type(data) == int:      data = str(data).encode()
 			elif type(data) == bytes:  pass
-			else                       data = pickle.dumps(data)
+			else:                      data = pickle.dumps(data)
 			bge.logic.client.queue.append(b'character\0'+info+b'\0'+str(bm.get_object_id(self.box)).encode()+'\0'+data)
 			self.sync_times[info] = time.time() + bge.logic.client.update_period
 		
@@ -838,7 +840,7 @@ class Character(OfflineCharacter):
 	
 	def takeWay(self, orient):
 		self.syncInfo(b'way', orient)
-		OfflineCharacter.takeWay(self, orient):
+		OfflineCharacter.takeWay(self, orient)
 	
 	def updateJump(self, jump=True):
 		if jump: self.syncInfo(b'jump', b'1')
