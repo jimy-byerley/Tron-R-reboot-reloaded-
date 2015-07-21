@@ -182,7 +182,6 @@ class Server(socket.socket):
 						obid = words[1]
 						if obid in self.datas and index == self.datas[obid].host:
 							self.datas[obid].host = None
-							data.host = None
 					
 					# packet of kind:    setmeca.id.dump  ('\0' instead of .)
 					elif similar(packet, b'setmeca\0') and zeros >= 1: 
@@ -315,7 +314,7 @@ class Server(socket.socket):
 					for prop in data.properties:
 						packets.append(b'getprop\0'+ id +b'\0'+ prop +b'\0')
 				# else, send request to this client and more trusted clients
-				if self.hosts[data.host]:
+				if data.host != None and self.hosts[data.host]:
 					for packet in packets:
 						for i in range(data.host+1): # include the host provider
 							host = self.hosts[i]

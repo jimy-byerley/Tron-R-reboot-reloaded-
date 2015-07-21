@@ -177,7 +177,7 @@ class Client(socket.socket):
 								msg = b'setprop\0' + idbytes + b'\0'+ propname + b'\0' + pickle.dumps(obj[prop])
 								self.sendto(msg, host)
 						else:
-							self.send(b'unknown\0'+obname)
+							self.send(b'unknown\0'+idbytes)
 				
 				# packet of kind:    setmeca.id.dump  ('\0' instead of .)
 				elif similar(packet, b'setmeca\0') and zeros >= 1: 
@@ -194,12 +194,12 @@ class Client(socket.socket):
 							#obj.setParent(parent)
 						# modify game backup
 						if id in bm.unloaded:
-							for data in ('character', 'item', 'vehicle', 'object'):
+							for data in ('characters', 'items', 'vehicles', 'objects'):
 								for dump in bm.last_backup[data]:
 									if dump['id'] == id:
 										( # normally, the table can be used as a pointer
 											dump['pos'],      dump['orient'],
-											dump['velocity'], dump['angular'],
+											dump['velocity'], dump['angular'], parent
 										) = physics
 										break
 				
@@ -218,7 +218,7 @@ class Client(socket.socket):
 								if obj: obj[prop] = data
 								# modify game backup
 								if id in bm.unloaded:
-									for data in ('character', 'item', 'vehicle', 'object'):
+									for data in ('characters', 'items', 'vehicles', 'objects'):
 										for dump in bm.last_backup[data]:
 											if dump['id'] == id:
 												# normaly the table can be used as a pointer
