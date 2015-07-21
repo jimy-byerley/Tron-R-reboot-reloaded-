@@ -19,16 +19,16 @@ This file is part of Tron-R.
     along with Tron-R.  If not, see <http://www.gnu.org/licenses/>. 2
 """
 
-import bge
-import mathutils
-import math
-import os
-import time
-import threading
-import special_characters
-import tools
+import bge, mathutils
+import special_characters, tools
 import client
+import backup_manager as bm
+import os, time, threading, pickle, math
 
+
+
+def similar(s, pattern) :        
+	return s[:len(pattern)] == pattern
 
 # to set True after game initialized
 load_async = False
@@ -535,7 +535,7 @@ class Skin(object) :
 
 
 
-class Character(object) :
+class OfflineCharacter(object) :
 	"""
 	Représente un personnage, vrai joueur ou non, c'est un avatar. Cette classe sert à manager l'ensemble des
 	possibilités du personnage (action, mouvements, ...)
@@ -621,7 +621,7 @@ class Character(object) :
 		# markup the network synchronisation for physics
 		self.box[client.marker_property_physic] = True
 		self.box[client.marker_property_property] = "('hp', 'active', 'move_speed')"
-		return self.box;
+		return self.box
 
 
 	def disable(self):
@@ -798,12 +798,141 @@ class Character(object) :
 			self.vehicle['class'].updateCont(comlist)
 	
 
+class Character(OfflineCharacter):
+	"""
+	Represent a character PNJ or not. This class add network sync to client on these methods:
+	* lookAt
+	* takeWay
+	* updateJump
+	* updateRunning
+	* drop
+	* click
+	* wieldItem
+	"""
+	sync_times = {}    # list of next times to send sync info to the server, indexed by info name as bytes.
+	
+	def spawn(self, ref=None, existing=None):
+		OfflineCharacter.spawn(self, ref, existing)
+		client = bge.logic.client
+		if client:
+			# configure client<->server sync exchange
+			if client_callack not in client.callbacks: client.callbacks.append(client_callback)
+			client.sync_physic(self.box)
+			client.sync_property(self.box, 'active')
+			client.sync_property(self.box, 'move speed')
+			client.sync_property(self.box, 'hp')
+	
+	# internal method: send sync information, given as bytes and the python data
+	def syncInfo(self, info, data):
+		if self.sync_times[info] > time.time():
+			if type(data) == int:      data = str(data).encode()
+			elif type(data) == bytes:  pass
+			else                       data = pickle.dumps(data)
+			bge.logic.client.queue.append(b'character\0'+info+b'\0'+str(bm.get_object_id(self.box)).encode()+'\0'+data)
+			self.sync_times[info] = time.time() + bge.logic.client.update_period
+		
+	
+	def lookAt(self, rotEuler):
+		self.syncInfo(b'look', rotEuler[:])
+		OfflineCharacter.lookAt(self, rotEuler)
+	
+	def takeWay(self, orient):
+		self.syncInfo(b'way', orient)
+		OfflineCharacter.takeWay(self, orient):
+	
+	def updateJump(self, jump=True):
+		if jump: self.syncInfo(b'jump', b'1')
+		else:    self.syncInfo(b'jump', b'0')
+		OfflineCharacter.updateJump(self, jump)
+	
+	def updateRunning(self, speed):
+		self.syncInfo(b'run', speed)
+		OfflineCharacter.updateRunning(self, speed)
+
+	def drop(self):
+		self.syncInfo(b'drop', b'')
+		OfflineCharacter.drop(self)
+	
+	def click(self):
+		self.syncInfo(b'click', b'')
+		OfflineCharacter.click(self)
+	
+	def wieldItem(self, item, wait=False):
+		if type(item) == int :
+			if item >= len(self.skin.items): return
+			index = item
+			obj = self.skin.items[index]
+		elif item == "hand" :
+			obj = self.skin.handobject
+		elif type(item) == bge.types.KX_GameObject :
+			index = self.skin.items.index(obj)
+			obj = item
+		else :
+			raise(TypeError("item type must be int or KX_GameObject."))
+			return
+		self.syncInfo(b'wield', index)
+		OfflineCharacter.wieldItem(self, item, wait)
+
+	def toggleHelmet(self, helmet=None):
+		if helmet == None: helmet = (not self.skin.helmet_active)
+		if helmet: self.syncInfo(b'helmet', b'1')
+		else:      self.syncInfo(b'helmet', b'0')
+		OfflineCharacter.toggleHelmet(self, helmet)
+
+
+# execute all the characters actions resquested by the server, without distincition of if it is or not an offline character.
+def client_callback(server, packet):
+	if client.similar(packet, b'character\0'):
+		if packet.count(b'\0') < 3: return True
+		info, uniqid = packet.split(b'\0')[1:3]
+		data = packet[12+len(info)+len(uniqid):] # data can be a seriaalized data, so might contain zeros
+		if not uniqid.isdigit(): return True
+		uniqid = int(uniqid)
+		character = bm.get_object_by_id(uniqid)
+		if not character or 'class' not in character: return True
+		if info == b'look':
+			try: rotEuler = pickle.loads(data)
+			except: return True # good packet, but bad information
+			character.lookAt(mathutils.Euler(rotEuler))
+		
+		elif info == b'way':
+			try: orient = pickle.loads(data)
+			except: return True
+			character.takeWay(orient)
+		
+		elif info == b'jump':
+			if data == b'1': character.updateJump(True)
+			else:            character.updateJump(False)
+		
+		elif info == b'run':
+			try: speed = pickle.loads(data)
+			except: return True
+			Character.updateRunning(speed)
+		
+		elif info == b'drop':
+			Character.drop()
+		
+		elif info == b'click':
+			Character.click()
+		
+		elif info == b'wield':
+			if not data.isdigit(): return False
+			Character.wieldItem(int(data))
+		
+		elif info == b'helmet':
+			if data == b'1': Character.toggleHelmet(True)
+			else:            Character.toggleHelmet(False)
+		# remove packet after this callback
+		return True
+	# else, unknown packet for this callback, pass
+	return False
+
 
 
 # callback d'initialisation d'un objet personnage
 def init() :
-	cont = bge.logic.getCurrentController();
-	owner = cont.owner;
-	character = Character(owner["character_name"], owner["skin"]);
-	character.spawn(owner);
-	owner.endObject();
+	cont = bge.logic.getCurrentController()
+	owner = cont.owner
+	character = Character(owner["character_name"], owner["skin"])
+	character.spawn(owner)
+	owner.endObject()
