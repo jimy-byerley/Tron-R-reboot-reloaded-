@@ -119,11 +119,13 @@ if game_file:
 		for dump in backup_manager.last_backup['characters']:
 			if dump['name'] == game_server[2]:
 				fp_dump = dump
+				break
 	else:
 		# in local game, the character can take the name he wants, so the config file use the object ID to avoid confusion with a bot with the same name
 		for dump in backup_manager.last_backup['characters']:
 			if dump['id'] == config['object_id']:
 				fp_dump = dump
+				break
 
 if fp_dump == None :
 	spawner = scene.addObject("first player spawn", scene.active_camera)
@@ -133,6 +135,10 @@ if fp_dump == None :
 		spawner['character_name'] = config['nickname']
 	spawner['skin'] = config['skin']
 else:
+	if game_server:
+		config['nickname'] = game_server[2]
+		config['skin'] = fp_dump['skin']
+		config['object_id'] = fp_dump['id']
 	scene.active_camera.worldPosition = fp_dump['pos']
 	scenes.thread_loader()
 	backup_manager.thread_loader()
