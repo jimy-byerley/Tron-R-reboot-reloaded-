@@ -17,6 +17,8 @@ This file is part of Tron-R.
     along with Tron-R.  If not, see <http://www.gnu.org/licenses/>. 2
 """
 
+from copy import deepcopy
+
 MOVE_ACTION = "move action"
 ITEM_ACTION = "item action"
 HEADZ_ACTION = "head Z"
@@ -46,6 +48,28 @@ animations = {
 		"run ford" : ('clu move', 141, 147, 161, 168),
 		"jump" : ('clu move', 168, 173, 182, 191),
 		},
+	
+	'flynn' : { # animations pour CLU
+		"click" : ('flynn item', 285, 289, 290, 292),
+		# disk actions
+		#"launch disk" : ('clu item', 90, 103, 104, 120),
+		"launch disk" : ('flynn move', 120, 130, 131, 140),
+		"catch disk" : ('flynn item', 257, 257, 270, 270),
+		"take disk" : ('flynn item', 60, 64, 66, 74),
+		# light-baton and cycle actions
+		"take light baton" : ('flynn item', 241, 249, 249, 253),
+		"set cycle" : ('flynn move', 216, 220, 226, 236), # départ, dabut de saut, prise 2 mains, position de conduite
+		"biking with disk" : ('flynn move', 247, 250, 250, 255),
+		"biking take disk" : ('flynn item', 276, 278, 278, 280),
+		# head movements
+		"look Z" : ('flynn head Z', 10, 20, 20, 30),
+		"look Y" : ('flynn head Y', 10, 20, 20, 30),
+		# basic movements
+		"walk ford" : ('flynn move', 20, 30, 51, 60),
+		"walk back" : ('flynn move', 60, 51, 30, 20),
+		"run ford" : ('flynn move', 141, 147, 161, 168),
+		"jump" : ('flynn move', 168, 173, 182, 191),
+		},
 		
 	'monitor' : { # animations pour Moniteur
 		"click" : ('monitor item', 85, 88, 80, 94),
@@ -68,14 +92,6 @@ animations = {
 		"jump" : ('monitor move', 90, 95, 98, 104),
 		},
 	}
-
-# dynamicaly defined animations
-animations['flynn'] = animations['clu']
-animations['flynn']['take light baton'] = ('flynn item', 241, 249, 249, 253)
-animations['flynn']['biking take disk'] = ('flynn item', 276, 278, 278, 280)
-animations['flynn']['catch disk']       = ('flynn item', 257, 257, 270, 270)
-animations['flynn']['take disk']        = ('flynn item', 60, 64, 66, 74)
-animations['flynn']['click']            = ('flynn item', 285, 289, 290, 292)
 
 
 # some prefixes
