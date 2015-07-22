@@ -65,7 +65,7 @@ class ignore:
 class Server(socket.socket):
 	packet_size          = 1024
 	max_client           = 30      # maximum number of clients (can be set at runtime to increase number of clients but doesn't quick connected clients
-	update_period        = 0.1     # maximum time (s) between 2 server update communication (update of client datas)
+	update_period        = 0.5     # maximum time (s) between 2 server update communication (update of client datas)
 	step_time            = 0.2     # maximum time in execution of each step
 	bad_password_timeout = 3       # time the client should wait when get a wrong password (second)
 	multiple_sessions    = False   # set to True, allow multiple host to use the same user (account and password)
@@ -284,20 +284,17 @@ class Server(socket.socket):
 							self.sendto(subject + b'password rejected', host)
 			
 			# send queued, in the list order, one packet per packet received if the client receive.
-			if self.queue:
-				for host in self.queue:
+			for host in self.queue:
+				if self.queue[host]:
 					packet = self.queue[host].pop(0)
-					# special channel named 'all' send packets to all hosts
 					if host == 'all':
-						for h in self.hosts:
-							# packet can contain an error.
-							try: self.send(packet, h)
+						for dest in self.hosts:
+							try: self.sendto(packet, dest)
 							except: print('unable to send queued packet:', packet)
-					# else, each channel is particular to one host
 					else:
-						# packet can contain an error.
-						try: self.send(packet, host)
+						try: self.sendto(packet, host)
 						except: print('unable to send queued packet:', packet)
+			
 		
 		
 		if time.time() < end_step and self.run:
@@ -369,6 +366,7 @@ class Server(socket.socket):
 		self.order.insert(trusting, index)
 		if user not in self.users:  self.users[user] = []
 		self.users[user].append(host)
+		self.queue[host] = []
 		self.num_client += 1
 		return index
 	
@@ -380,6 +378,7 @@ class Server(socket.socket):
 			self.order.pop(self.order.index(index))
 			self.num_client -= 1
 			self.cleared_index.append(index)
+			del self.queue[host]
 			for user in self.users:
 				if host in self.users[user]: self.users[user].pop(self.users[user].index(host))
 			return index

@@ -810,8 +810,11 @@ class Character(OfflineCharacter):
 	* helmet
 	* wieldItem
 	"""
-	# list of next times to send sync info to the server, indexed by info name as bytes.
-	sync_times = {b'look':0., b'way':0., b'jump':0., b'run':0., b'drop':0., b'click':0., b'helmet':0., b'wield':0.}
+	# next times to sync movements
+	sync_run = 0.
+	sync_jump = 0.
+	sync_look = 0.
+	sync_way = 0.
 	
 	def spawn(self, ref=None, existing=None):
 		OfflineCharacter.spawn(self, ref, existing)
@@ -826,34 +829,45 @@ class Character(OfflineCharacter):
 	
 	# internal method: send sync information, given as bytes and the python data
 	def syncInfo(self, info, data):
-		if self.sync_times[info] > time.time():
+		if bge.logic.client:
 			if type(data) == int:      data = str(data).encode()
 			elif type(data) == bytes:  pass
 			else:                      data = pickle.dumps(data)
-			bge.logic.client.queue.append(b'character\0'+info+b'\0'+str(bm.get_object_id(self.box)).encode()+'\0'+data)
-			self.sync_times[info] = time.time() + bge.logic.client.update_period
+			bge.logic.client.queue.append(b'character\0'+info+b'\0'+str(bm.get_object_id(self.box)).encode()+b'\0'+data)
 		
 	
 	def lookAt(self, rotEuler):
-		self.syncInfo(b'look', rotEuler[:])
+		if time.time() > self.sync_look:
+			self.syncInfo(b'look', rotEuler[:])
+			self.sync_look = time.time() + 0.5
 		OfflineCharacter.lookAt(self, rotEuler)
 	
 	def takeWay(self, orient):
-		self.syncInfo(b'way', orient)
+		if time.time() > self.sync_way:
+			self.syncInfo(b'way', orient)
+			self.sync_way = time.time() + 0.5
 		OfflineCharacter.takeWay(self, orient)
 	
 	def updateJump(self, jump=True):
-		if jump: self.syncInfo(b'jump', b'1')
-		else:    self.syncInfo(b'jump', b'0')
+		if time.time() > self.sync_jump:
+			if jump: self.syncInfo(b'jump', b'1')
+			else:    self.syncInfo(b'jump', b'0')
+			self.sync_jump = time.time() + 0.1
 		OfflineCharacter.updateJump(self, jump)
 	
 	def updateRunning(self, speed):
-		self.syncInfo(b'run', speed)
+		if time.time() > self.sync_run:
+			self.syncInfo(b'run', float(speed))
+			self.sync_run = time.time() + 0.5
 		OfflineCharacter.updateRunning(self, speed)
 
 	def drop(self):
 		self.syncInfo(b'drop', b'')
 		OfflineCharacter.drop(self)
+	
+	def take(self):
+		self.syncInfo(b'take', b'')
+		OfflineCharacter.take(self)
 	
 	def click(self):
 		self.syncInfo(b'click', b'')
@@ -890,40 +904,53 @@ def client_callback(server, packet):
 		data = packet[12+len(info)+len(uniqid):] # data can be a seriaalized data, so might contain zeros
 		if not uniqid.isdigit(): return True
 		uniqid = int(uniqid)
-		character = bm.get_object_by_id(uniqid)
-		if not character or 'class' not in character: return True
+		char = bm.get_object_by_id(bge.logic.getCurrentScene(), uniqid)
+		if not char: 
+			print(1)
+			return True
+		if 'class' not in char:
+			print('error: client_callback: avatar', uniqid, "doesn't have any class")
+			return True
+		character = char['class']
 		if info == b'look':
 			try: rotEuler = pickle.loads(data)
-			except: return True # good packet, but bad information
-			character.lookAt(mathutils.Euler(rotEuler))
+			except: 
+				print(2)
+				return True # good packet, but bad information
+			OfflineCharacter.lookAt(character, mathutils.Euler(rotEuler))
 		
 		elif info == b'way':
 			try: orient = pickle.loads(data)
-			except: return True
-			character.takeWay(orient)
+			except: 
+				print(3)
+				return True
+			OfflineCharacter.takeWay(character, orient)
 		
 		elif info == b'jump':
-			if data == b'1': character.updateJump(True)
-			else:            character.updateJump(False)
+			if data == b'1': OfflineCharacter.updateJump(character, True)
+			else:            OfflineCharacter.updateJump(character, False)
 		
 		elif info == b'run':
 			try: speed = pickle.loads(data)
-			except: return True
-			Character.updateRunning(speed)
+			except: 
+				print(4)
+				return True
+			print('run', speed, character.name)
+			OfflineCharacter.updateRunning(character, speed)
 		
 		elif info == b'drop':
-			Character.drop()
+			OfflineCharacter.drop(character)
 		
 		elif info == b'click':
-			Character.click()
+			OfflineCharacter.click(character)
 		
 		elif info == b'wield':
-			if not data.isdigit(): return False
-			Character.wieldItem(int(data))
+			if not data.isdigit(): print(5); return False
+			OfflineCharacter.wieldItem(character, int(data))
 		
 		elif info == b'helmet':
-			if data == b'1': Character.toggleHelmet(True)
-			else:            Character.toggleHelmet(False)
+			if data == b'1': OfflineCharacter.toggleHelmet(character, True)
+			else:            OfflineCharacter.toggleHelmet(character, False)
 		# remove packet after this callback
 		return True
 	# else, unknown packet for this callback, pass

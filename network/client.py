@@ -106,8 +106,9 @@ def synchronize(cont):
 
 class Client(socket.socket):
 	packet_size   = 1024     # max size of buffers to receive from the server
-	update_period = 0.1      # minimum time interval between 2 update from the server, of objects positions
+	update_period = 0.5      # minimum time interval between 2 update from the server, of objects positions
 	step_time     = 0.05     # maximum time for each step
+	callback_error = True    # if True, raise callback errors instead of continuing the step execution
 	# extendable list of properties to exclude of syncs (to avod security breachs)
 	properties_blacklist = ["class","repr","armature", "uniqid", marker_property_physic, marker_property_property]
 	
@@ -258,6 +259,8 @@ class Client(socket.socket):
 				
 				else:
 					for callback in self.callbacks:
+						if self.callback_error:
+							callback(self, packet)
 						try: 
 							if callback(self, packet): break
 						except: print('error in callback:', callback)
@@ -265,7 +268,7 @@ class Client(socket.socket):
 			# send queued, in the list order, one packet per packet received if the client receive.
 			if self.queue:
 				packet = self.queue.pop(0)
-				try: self.send(packet)
+				try: self.sendto(packet, self.remote)
 				except: print('unable to send queued packet:', packet)
 		
 		

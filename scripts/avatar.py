@@ -19,34 +19,29 @@ This file is part of Tron-R.
     along with Tron-R.  If not, see <http://www.gnu.org/licenses/>. 2
 """
 
-import character
 import config
-import bge
-import mathutils
-import math
-import Rasterizer
-import threading
-import time
-import vehicle
-import copy
-import random
-import backup_manager
+import bge, mathutils, aud
+import time, random, copy, threading, math, pickle
+import character, vehicle, filters
+import backup_manager as bm
+from bge.logic import *
+from bge.events import *
 
 class Avatar(character.Character) :
 	"""
 	Cette classe représente le joueur à la première personne sur cet ordinateur.
 	"""
+	overlay = None
+	menu_active = False
 
 	def spawn(self, ref, existing=False) :
 		character.Character.spawn(self, ref, existing)
-		self.overlay = None
 		for scene in bge.logic.getSceneList() :
 			if scene.name == "overlay" :
 				self.overlay = scene
 		self.box["first player"] = True
 		scene.addObject("skybox", ref)
-		i = backup_manager.get_object_id(self.box)
-		
+	
 
 	def setHp(self, hp) :
 		pass
@@ -137,13 +132,30 @@ class Avatar(character.Character) :
 	
 	# internal methode: send sync informations, given as bytes and the python data
 	def syncInfo(self, info, data):
-		if self.sync_times[info] > time.time():
+		if bge.logic.client:
 			if type(data) == int:      data = str(data).encode()
 			elif type(data) == bytes:  pass
 			else:                      data = pickle.dumps(data)
 			# similar to Character class's method, but use the marker 'avatar\0' instead of 'character\0'
-			bge.logic.client.queue.append(b'avatar\0'+info+b'\0'+str(bm.get_object_id(self.box)).encode()+'\0'+data)
-			self.sync_times[info] = time.time() + bge.logic.client.update_period
+			bge.logic.client.queue.append(b'avatar\0'+info+b'\0'+str(bm.get_object_id(self.box)).encode()+b'\0'+data)
+	
+	def toggle_menu(self, menu=None):
+		if menu==None: menu = not self.menu_active
+		self.menu_active = menu
+		if menu:
+			self.overlay.objects['menu'].visible = True
+			for child in self.overlay.objects['menu'].childrenRecursive:
+				child.visible = True
+			filters.enable_filter('pause menu')
+			bge.render.showMouse(True)
+		else:
+			self.overlay.objects['menu'].visible = False
+			for child in self.overlay.objects['menu'].childrenRecursive:
+				child.visible = False
+			filters.disable_filter('pause menu')
+			bge.render.showMouse(False)
+			bge.render.setMousePosition(WIN_MIDDLE_X, WIN_MIDDLE_Y)
+
 
 
 first_player = None
@@ -189,8 +201,8 @@ def setup_overlay() :
 	scene = bge.logic.getCurrentScene()
 	camera = scene.objects["Camera"]
 	#first_player.overlay = scene
-	w = Rasterizer.getWindowWidth()
-	h = Rasterizer.getWindowHeight()
+	w = bge.render.getWindowWidth()
+	h = bge.render.getWindowHeight()
 	top = scene.objects["top side"]
 	bottom = scene.objects["bottom side"]
 	right = scene.objects["right side"]
@@ -221,33 +233,39 @@ def _click(sensor, key) :
 
 
 
-WIN_MIDDLE_X = int(Rasterizer.getWindowWidth()/2)
-WIN_MIDDLE_Y = int(Rasterizer.getWindowHeight()/2)
+WIN_MIDDLE_X = int(bge.render.getWindowWidth()/2)
+WIN_MIDDLE_Y = int(bge.render.getWindowHeight()/2)
 mx, my = (WIN_MIDDLE_X, WIN_MIDDLE_Y)
-Rasterizer.setMousePosition(WIN_MIDDLE_X, WIN_MIDDLE_Y)
+bge.render.setMousePosition(WIN_MIDDLE_X, WIN_MIDDLE_Y)
 change = False
-boxrotz = 0;
+boxrotz = 0
 
 def keyboard_input() :
 	"""
 	keyboard_input() est le callback du clavier, il est appelé par le spawn du premier joueur
 	"""
-	global last_action, first_player, change, mx, boxrotz;
-	cont = bge.logic.getCurrentController();
-	own = cont.owner;
-	sens = cont.sensors[0];
+	global last_action, first_player, change, mx, boxrotz
+	cont = bge.logic.getCurrentController()
+	own = cont.owner
+	sens = cont.sensors[0]
 
 	change = False; # doit etre placé à vrai si l'utilisateur effectue un déplacement
-	x = (mx)*config.mouse.sensibility; # réorientation de la camera (utilisation des variables de mouse_input() )
-	y = (my)*config.mouse.sensibility;
-	camrotz = 0; # lacet de la camera dans le referentiel de la boite
+	x = (mx)*config.mouse.sensibility # réorientation de la camera (utilisation des variables de mouse_input() )
+	y = (my)*config.mouse.sensibility
+	camrotz = 0 # lacet de la camera dans le referentiel de la boite
+	
+	## menu ##
+	
+	if sens.getKeyStatus(config.keys.pause_menu) == KX_INPUT_JUST_ACTIVATED:
+		first_player.toggle_menu()
+	if first_player.menu_active: return
 
 	## camera control ##
 
 	if _touch(sens, config.keys.toggle_fps) :
-		first_player.setCameraActive("fps");
+		first_player.setCameraActive("fps")
 	elif _touch(sens, config.keys.toggle_tps) :
-		first_player.setCameraActive("back");
+		first_player.setCameraActive("back")
 
 	## misc control ##
 
@@ -264,7 +282,7 @@ def keyboard_input() :
 		first_player.wieldItem(2)
 	
 	# show/hide helmet
-	if _touch(sens, config.keys.toggle_helmet):
+	if sens.getKeyStatus(config.keys.toggle_helmet) == KX_INPUT_JUST_ACTIVATED:
 		first_player.toggleHelmet()
 
 	
@@ -344,6 +362,8 @@ def mouse_input() :
 	own = cont.owner
 	sens = cont.sensors[0]
 
+	if first_player.menu_active: return
+
 	if _click(sens, config.interact.take) and first_player.getInteractor() : # l'utilisateur doit cliquer pour ramasser l'objet
 		obj = first_player.getInteractor()
 		if "interact" in obj:
@@ -380,8 +400,41 @@ def mouse_input() :
 		x -= first_player.orient.z
 	first_player.lookAt(mathutils.Euler((0, y, -x)))
 
-	Rasterizer.setMousePosition(WIN_MIDDLE_X, WIN_MIDDLE_Y)
+	bge.render.setMousePosition(WIN_MIDDLE_X, WIN_MIDDLE_Y)
 
+
+menu_item_selected = None
+
+def mouse_over_item(cont):
+	global menu_item_selected
+	mouseover = cont.sensors['Mouse']
+	owner = cont.owner
+	cursor = first_player.overlay.objects['menu_cursor']
+	if mouseover.status == KX_SENSOR_JUST_ACTIVATED:
+		menu_item_selected = owner
+		cursor.setParent(owner)
+		cursor.localPosition = (-1., -0.1, 0)
+		cursor.localOrientation = mathutils.Euler((-math.pi/2, 0., 0.))
+		# play sound
+		sound = aud.Factory(bge.logic.sounds_path+'/share/interface-rollover.mp3')
+		audio = aud.device()
+		audio.volume = 0.1
+		audio.play(sound)
+	if mouseover.status in (KX_SENSOR_JUST_ACTIVATED, KX_SENSOR_ACTIVE) and mouseover.getButtonStatus(LEFTMOUSE) == KX_INPUT_JUST_ACTIVATED:
+		menu_select()
+
+def menu_cursor_blink(cont):
+	if first_player.menu_active:
+		cont.owner.visible = not cont.owner.visible
+	elif cont.owner.visible:
+		cont.owner.visible = False
+
+def menu_select():
+	print(menu_item_selected.name)
+	if menu_item_selected.name == 'quit_game':
+		bge.logic.bootloader['quit'] = True
+	if menu_item_selected.name == 'resume_game':
+		first_player.toggle_menu(False)
 
 
 def skybox_update(cont) :

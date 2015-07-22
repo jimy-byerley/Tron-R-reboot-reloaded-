@@ -23,6 +23,8 @@ class keys:
 	item3 = THREEKEY
 	
 	toggle_helmet = HKEY
+	
+	pause_menu = ESCKEY
 
 class mouse:
 	sensibility = 0.002
