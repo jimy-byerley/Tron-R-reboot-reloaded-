@@ -51,6 +51,9 @@ At contrary of other field depth effects, objects that have not the focus appear
 	
 	("history mode", "history_mode.glsl", "warp border of screen",
 	           "History mode is as the flashback in tron legacy: It warp image on the sides of the screen and difract the colors."),
+	
+	# don't use theses
+	("pause menu", "pause_menu.glsl", "darken the screen for the pause menu", ""),
 ]
 
 enabled = []    # list of filters enabled (short names)
@@ -75,7 +78,7 @@ def callback_update(cont):
 	owner = cont.owner
 	# disable first to avoid overload of the GPU during the steps filters are changed.
 	if to_disable:
-		name = to_enable.pop(0)
+		name = to_disable.pop(0)
 		for i in range(len(filters)):
 			if filters[i][FILTER_SHORTNAME] == name:
 				print('module \"%s\": disable filter \'%s\'.' % (__name__, name))
