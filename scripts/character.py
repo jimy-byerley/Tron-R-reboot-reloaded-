@@ -97,8 +97,13 @@ class Skin(object) :
 	"""
 	body_hair = body_head = body_helmet = None
 	helmet_active = False
+	
+	attachs  = [] # attaches pour ranger les items sur le corps
+	hands    = {} # attaches des items dans la main, désignées par leur nom
+	items    = [] # liste des items attachés au corps
+	handitem = None # item selectionné
 
-	animations = { # animations pour CLU
+	animations = {
 		# disk actions
 		"launch disk" : ('clu item', 90, 103, 104, 120),
 		"catch disk" : ('clu item', 257, 257, 270, 270),
@@ -140,11 +145,12 @@ class Skin(object) :
 			oldclass = existing['class']
 		self.armature.setParent(self.box)
 		self.box["armature"] = self.armature
-		# recuperer les points d'attache pour les items
-		self.attachs = [] # attaches pour ranger les items sur le corps
-		self.hands = {} # attaches des items dans la main, désignées par leur nom
-		self.items = [] # liste des items attachés au corps
+	
+		self.attachs  = [] # attaches pour ranger les items sur le corps
+		self.hands    = {} # attaches des items dans la main, désignées par leur nom
+		self.items    = [] # liste des items attachés au corps
 		self.handitem = None # item selectionné
+		# recuperer les points d'attache pour les items
 		for child in self.armature.children :
 			if "attach" in child :
 				self.attachs.append(child)
@@ -316,17 +322,18 @@ class Skin(object) :
 						index = i
 						break
 			else :
-				raise(TypeError("attach must be of type int, str or KX_GameObject instead of {}" % (type(attach))))
+				raise(TypeError("attach must be of type int, str or KX_GameObject instead of %s" % str(type(attach))))
 			attach = self.attachs[index]
 			# vider la case cible si elle est pleine
 			if self.items[index] != None :
-				self.toggleItem(index, wielded=True)
+				self.toggleItem(index, wielded=True, wait=True)
 			# si on ne peut pas vider la case cible, annulation
 			if self.items[index] != None :
 				# replacement de l'item dans l'inventaire
 				if oldindex > 0 : self.items[oldindex] = item
 				elif oldindex == -2 : self.handitem = item
-				raise(IndexError("new attach is busy"))
+				print(self.items[index], oldindex, index)
+				print('error: Skin.attach(): new attach is busy')
 				return
 
 			# assigner l'item au nouvel emplacement
@@ -547,14 +554,16 @@ class OfflineCharacter(object) :
 	uptime = 0
 	
 	body_head = body_hair = body_helmet = None
+	
+	inair_date = 0.
+	inair_laststate = False
+	item_toggle_date = 0.
+	helmet_toggle_date = 0.
 
 	
 	def __init__(self, name, skin_name="clu") :
 		self.name = name
 		self.skin_name = skin_name
-		self.inair_date = 0.
-		self.inair_laststate = False
-		self.itemtoggle_date = 0.
 
 	def __repr__(self) :
 		return "%s(name=%s, skin_name=%s)" % (self.__class__.__name__, repr(self.name), repr(self.skin_name))
@@ -647,7 +656,8 @@ class OfflineCharacter(object) :
 			self.move_speed = speed
 			self.box['move speed'] = speed
 			v = self.mover.dLoc
-			self.mover.dLoc = (0, speed*dt, 0)
+			#self.mover.dLoc = (0, speed*dt, 0)
+			self.mover.dLoc = (0, speed/(bge.logic.getLogicTicRate()), 0)  # or bge.logic.getAverageFrameRate()
 		else :
 			self.mover.dLoc = (0,0,0)
 
@@ -718,11 +728,11 @@ class OfflineCharacter(object) :
 
 	
 	def availableItem(self) :
-		s = self.item_sensor.sensors[0];
+		s = self.item_sensor.sensors[0]
 		if s.status in (bge.logic.KX_INPUT_JUST_ACTIVATED, bge.logic.KX_INPUT_ACTIVE) and len(s.hitObjectList) :
 			for obj in s.hitObjectList :
 				if "item" in obj :
-					return s.hitObjectList[0];
+					return s.hitObjectList[0]
 		return None;
 
 	def take(self) :
@@ -751,8 +761,8 @@ class OfflineCharacter(object) :
 
 	# item est un KX_GameObject, une chaine ou un numero (attention, le numero 0 signifie la main)
 	def wieldItem(self, item, wait=False) :
-		if time.time() >= self.itemtoggle_date + 0.5 : # éviter les répétitions trop rapides des touches
-			self.itemtoggle_date = time.time()
+		if time.time() >= self.item_toggle_date : # éviter les répétitions trop rapides des touches
+			self.item_toggle_date = time.time() + 0.5
 			self.skin.wieldItem(item, wait=wait)
 
 	def actionItem(self, action):
@@ -760,7 +770,9 @@ class OfflineCharacter(object) :
 	
 	
 	def toggleHelmet(self, helmet=None):
-		self.skin.toggleHelmet(helmet)
+		if self.helmet_toggle_date <= time.time():
+			self.helmet_toggle_date = time.time() + 0.5
+			self.skin.toggleHelmet(helmet)
 
 
 	orient = mathutils.Euler((0,0,0))
@@ -833,32 +845,32 @@ class Character(OfflineCharacter):
 			if type(data) == int:      data = str(data).encode()
 			elif type(data) == bytes:  pass
 			else:                      data = pickle.dumps(data)
-			bge.logic.client.queue.append(b'character\0'+info+b'\0'+str(bm.get_object_id(self.box)).encode()+b'\0'+data)
+			bge.logic.client.add_to_queue(b'character\0'+info+b'\0'+str(bm.get_object_id(self.box)).encode()+b'\0'+data)
 		
 	
 	def lookAt(self, rotEuler):
 		if time.time() > self.sync_look:
+			self.sync_look = time.time() + 0.3
 			self.syncInfo(b'look', rotEuler[:])
-			self.sync_look = time.time() + 0.5
 		OfflineCharacter.lookAt(self, rotEuler)
 	
 	def takeWay(self, orient):
 		if time.time() > self.sync_way:
-			self.syncInfo(b'way', orient)
 			self.sync_way = time.time() + 0.5
+			self.syncInfo(b'way', orient)
 		OfflineCharacter.takeWay(self, orient)
 	
 	def updateJump(self, jump=True):
 		if time.time() > self.sync_jump:
+			self.sync_jump = time.time() + 0.1
 			if jump: self.syncInfo(b'jump', b'1')
 			else:    self.syncInfo(b'jump', b'0')
-			self.sync_jump = time.time() + 0.1
 		OfflineCharacter.updateJump(self, jump)
 	
 	def updateRunning(self, speed):
 		if time.time() > self.sync_run:
+			self.sync_run = time.time() + 0.1
 			self.syncInfo(b'run', float(speed))
-			self.sync_run = time.time() + 0.5
 		OfflineCharacter.updateRunning(self, speed)
 
 	def drop(self):
@@ -866,34 +878,46 @@ class Character(OfflineCharacter):
 		OfflineCharacter.drop(self)
 	
 	def take(self):
-		self.syncInfo(b'take', b'')
+		obj = self.getInteractor()
+		self.syncInfo(b'take', bm.get_object_id(obj))
 		OfflineCharacter.take(self)
 	
 	def click(self):
 		self.syncInfo(b'click', b'')
 		OfflineCharacter.click(self)
 	
-	def wieldItem(self, item, wait=False):
-		if type(item) == int :
-			if item >= len(self.skin.items): return
-			index = item
-			obj = self.skin.items[index]
-		elif item == "hand" :
-			obj = self.skin.handobject
-		elif type(item) == bge.types.KX_GameObject :
-			index = self.skin.items.index(obj)
-			obj = item
-		else :
-			raise(TypeError("item type must be int or KX_GameObject."))
+	def actionItem(self, action):
+		# execute l'action numero action sur l'item de la main, une action est similaire à un clic de la souris
+		if not self.skin.handitem or not 'class' in self.skin.handitem or not self.skin.handitem['class'] :
 			return
-		self.syncInfo(b'wield', index)
-		OfflineCharacter.wieldItem(self, item, wait)
+		self.syncInfo(b'actionItem', action)
+		OfflineCharacter.actionItem(self, action)
+	
+	def wieldItem(self, item, wait=False):
+		if time.time() >= self.item_toggle_date:
+			if type(item) == int :
+				if item >= len(self.skin.items): return
+				index = item
+				obj = self.skin.items[index]
+			elif item == "hand" :
+				obj = self.skin.handobject
+			elif type(item) == bge.types.KX_GameObject :
+				index = self.skin.items.index(obj)
+				obj = item
+			else :
+				raise(TypeError("item type must be int or KX_GameObject."))
+				return
+			if item != "hand": self.syncInfo(b'wield', index)
+			else: self.syncInfo(b'wield', b'hand')
+			OfflineCharacter.wieldItem(self, item, wait)
 
 	def toggleHelmet(self, helmet=None):
-		if helmet == None: helmet = (not self.skin.helmet_active)
-		if helmet: self.syncInfo(b'helmet', b'1')
-		else:      self.syncInfo(b'helmet', b'0')
-		OfflineCharacter.toggleHelmet(self, helmet)
+		if self.helmet_toggle_date <= time.time():
+			if helmet == None: helmet = (not self.skin.helmet_active)
+			if helmet: self.syncInfo(b'helmet', b'1')
+			else:      self.syncInfo(b'helmet', b'0')
+			OfflineCharacter.toggleHelmet(self, helmet)
+			# there is not need to increment helmet_toggle_date, because it is done in toggleHelmet()
 
 
 # execute all the characters actions resquested by the server, without distincition of if it is or not an offline character.
@@ -905,25 +929,19 @@ def client_callback(server, packet):
 		if not uniqid.isdigit(): return True
 		uniqid = int(uniqid)
 		char = bm.get_object_by_id(bge.logic.getCurrentScene(), uniqid)
-		if not char: 
-			print(1)
-			return True
+		if not char: return True
 		if 'class' not in char:
 			print('error: client_callback: avatar', uniqid, "doesn't have any class")
 			return True
 		character = char['class']
 		if info == b'look':
 			try: rotEuler = pickle.loads(data)
-			except: 
-				print(2)
-				return True # good packet, but bad information
+			except: return True # good packet, but bad information
 			OfflineCharacter.lookAt(character, mathutils.Euler(rotEuler))
 		
 		elif info == b'way':
 			try: orient = pickle.loads(data)
-			except: 
-				print(3)
-				return True
+			except: return True
 			OfflineCharacter.takeWay(character, orient)
 		
 		elif info == b'jump':
@@ -932,10 +950,7 @@ def client_callback(server, packet):
 		
 		elif info == b'run':
 			try: speed = pickle.loads(data)
-			except: 
-				print(4)
-				return True
-			print('run', speed, character.name)
+			except: return True
 			OfflineCharacter.updateRunning(character, speed)
 		
 		elif info == b'drop':
@@ -944,9 +959,17 @@ def client_callback(server, packet):
 		elif info == b'click':
 			OfflineCharacter.click(character)
 		
+		elif info == b'actionItem':
+			if data.isdigit(): OfflineCharacter.actionItem(character, int(data))
+		
+		elif info == b'take':
+			if data.isdigit():
+				obj = bm.get_object_by_id(bge.logic.getCurrentScene(), int(data))
+				if obj and "item" in obj: character.skin.take(obj)
+		
 		elif info == b'wield':
-			if not data.isdigit(): print(5); return False
-			OfflineCharacter.wieldItem(character, int(data))
+			if data == b'hand':  OfflineCharacter.wieldItem(character, 'hand', wait=True)
+			elif data.isdigit(): OfflineCharacter.wieldItem(character, int(data), wait=True)
 		
 		elif info == b'helmet':
 			if data == b'1': OfflineCharacter.toggleHelmet(character, True)

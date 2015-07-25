@@ -451,6 +451,13 @@ def init(cont):
 		layer=3, 
 		play_mode=KX_ACTION_MODE_PLAY)	
 	
+	# load config
+	config = read_config()
+	scene.objects['net_address']['Text']  = config['network_address']
+	scene.objects['net_port']['Text']     = config['network_port']
+	scene.objects['net_user']['Text']     = config['network_user']
+	scene.objects['net_password']['Text'] = config['network_password']
+	
 
 def text_enter(keyboard, cursor, entry):
 	# arrow keys to change cursor location

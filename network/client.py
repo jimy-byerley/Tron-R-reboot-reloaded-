@@ -18,7 +18,7 @@ This file is part of Tron-R.
 """
 
 import bge
-import threading, socket, time, pickle
+import threading, socket, time, pickle, copy
 from network import *
 import backup_manager as bm
 
@@ -80,7 +80,7 @@ def try_login(server, user, password):
 		return ""
 	else:
 		try:
-			return reponse.decode()
+			return reponse[15:].decode()
 		except:
 			return "reponse '%s' doesn't make sense" % repr(reponse)
 
@@ -106,7 +106,7 @@ def synchronize(cont):
 
 class Client(socket.socket):
 	packet_size   = 1024     # max size of buffers to receive from the server
-	update_period = 0.5      # minimum time interval between 2 update from the server, of objects positions
+	update_period = 1.5      # minimum time interval between 2 update from the server, of objects positions
 	step_time     = 0.05     # maximum time for each step
 	callback_error = True    # if True, raise callback errors instead of continuing the step execution
 	# extendable list of properties to exclude of syncs (to avod security breachs)
@@ -122,6 +122,7 @@ class Client(socket.socket):
 	
 	queue = []             # list of packet to send after every threatment of incomming packet (send whenever 
 	                       # there is no packet received)
+	                       # each packet is indexed by a number and is removed from the queue only when client answer the number
 	
 	def __init__(self, remote, scene=None, user="", password=""):
 		self.remote = remote
@@ -150,7 +151,7 @@ class Client(socket.socket):
 				# count number of '\0' in the packet, it indicates the minimal number of words in the packet
 				zeros = len(words)
 				# packet of kind:     getmeca.id
-				if similar(packet, b'getmeca\0') and zeros >= 1:
+				if similar(packet, b'getmeca\0'):
 					idbytes = words[1]
 					if idbytes.isdigit():
 						id = int(idbytes)
@@ -181,7 +182,7 @@ class Client(socket.socket):
 							self.send(b'unknown\0'+idbytes)
 				
 				# packet of kind:    setmeca.id.dump  ('\0' instead of .)
-				elif similar(packet, b'setmeca\0') and zeros >= 1: 
+				elif similar(packet, b'setmeca\0'): 
 					idbytes = words[1]
 					if idbytes.isdigit():
 						id = int(idbytes)
@@ -247,10 +248,14 @@ class Client(socket.socket):
 							bm.unloaded.append(dump['id'])
 				
 				
-				elif similar(packet, b'authentication\0') and zeros >= 1:
+				elif similar(packet, b'authentication\0'):
 					msg = words[1]
 					try: debugmsg('server answered', msg.decode())
 					except: pass
+				
+				# a client can reconnect itself when a server has crashed and restarted, just by reauthentification with the same login.
+				elif similar(packet, b'authentify\0'):
+					self.authentify()
 				
 				elif similar(packet, PACKET_STOP):
 					self.close()
@@ -260,16 +265,19 @@ class Client(socket.socket):
 				else:
 					for callback in self.callbacks:
 						if self.callback_error:
-							callback(self, packet)
-						try: 
 							if callback(self, packet): break
-						except: print('error in callback:', callback)
+						else:
+							try: 
+								if callback(self, packet): break
+							except: print('error in callback:', callback)
 			
 			# send queued, in the list order, one packet per packet received if the client receive.
 			if self.queue:
-				packet = self.queue.pop(0)
-				try: self.sendto(packet, self.remote)
-				except: print('unable to send queued packet:', packet)
+				while len(self.queue):
+					# will be removed from the queue when the client receive unqueue echo for this packet
+					packet = self.queue.pop(0)
+					try: self.send(packet)
+					except: print('unable to send queued packet:', packet)
 		
 		
 		if end_step > time.time() and self.run:
@@ -296,6 +304,10 @@ class Client(socket.socket):
 	# tell the server th synchronize the object property (given by name)
 	def sync_property(self, object, property):
 		self.send(b'getprop\0'+ str(bm.get_object_id(object)).encode() +b'\0'+ property.encode())
+	
+	# add a packet to the queue, all packet in the queue will be sent at the next step, and sent until server receive it.
+	def add_to_queue(self, packet):
+		self.queue.append(packet)
 		
 	
 	# clear the socket's queue, return the list of packet received

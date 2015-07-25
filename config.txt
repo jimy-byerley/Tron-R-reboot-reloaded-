@@ -1,10 +1,14 @@
 nickname      "Kevin Flynn"
 skin          "flynn"
 object_id     0
-window_width          1024
+window_width          800
 window_height         600
 filter_bloom          True
 filter_FXAA           True
 filter_history_mode   False
 filter_field_depth    False
 filter_SSAO           False
+network_address       "127.0.0.1"
+network_port          "30000"
+network_user          "Kevin Flynn"
+network_password      "machin"

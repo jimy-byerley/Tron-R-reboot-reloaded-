@@ -18,7 +18,7 @@ This file is part of Tron-R.
 """
 
 # python defined
-import threading, socket, time, pickle
+import threading, socket, time, pickle, copy
 # from the game
 import ip_addr
 
@@ -65,12 +65,13 @@ class ignore:
 class Server(socket.socket):
 	packet_size          = 1024
 	max_client           = 30      # maximum number of clients (can be set at runtime to increase number of clients but doesn't quick connected clients
-	update_period        = 0.5     # maximum time (s) between 2 server update communication (update of client datas)
-	step_time            = 0.2     # maximum time in execution of each step
+	update_period        = 1.5     # maximum time (s) between 2 server update communication (update of client datas)
+	step_time            = 0.8     # maximum time in execution of each step
 	bad_password_timeout = 3       # time the client should wait when get a wrong password (second)
 	multiple_sessions    = False   # set to True, allow multiple host to use the same user (account and password)
 	registeration        = True    # set to True, allow new users to be created
 	username_conformity  = username_conformity_off # function to call to test a new username (valid or not)
+	callback_error       = True    # If True, raise error of callbacks, but this can makes the server unstable
 	
 	run       = False      # put it to False to stop the server
 	hosts     = []         # list of connected hosts
@@ -95,7 +96,7 @@ class Server(socket.socket):
 	                       # the callbacks are executed in the list order.
 	
 	queue = {}             # list of packet to send after every threatment of incomming packet (send whenever there 
-	                       # is no packet received). Indexed by host (ip, port), with a special channel 'all' (packets are send to all hosts)
+	                       # is no packet received). Indexed by host (ip, port).
 	
 	
 	# put lan to False if you don't want to use lan interface
@@ -240,9 +241,12 @@ class Server(socket.socket):
 					
 					else:
 						for callback in self.callbacks:
-							try: 
+							if self.callback_error:
 								if callback(self, packet, host): break
-							except: print('error in callback:', callback)
+							else:
+								try: 
+									if callback(self, packet, host): break
+								except: print('error in callback:', callback)
 				
 				# try to resolve host, or reject it
 				else: 
@@ -282,16 +286,17 @@ class Server(socket.socket):
 						else:
 							self.delays[host] = time.time() + self.bad_password_timeout
 							self.sendto(subject + b'password rejected', host)
+					
+					# if there is no authentication request, send an authentication order
+					else:
+						self.sendto(b'authentify\0', host)
 			
 			# send queued, in the list order, one packet per packet received if the client receive.
 			for host in self.queue:
-				if self.queue[host]:
-					packet = self.queue[host].pop(0)
-					if host == 'all':
-						for dest in self.hosts:
-							try: self.sendto(packet, dest)
-							except: print('unable to send queued packet:', packet)
-					else:
+				if host:
+					while len(self.queue[host]):
+						# the packet will be removed from queue when the server receive unqueue echo for this packet
+						packet = self.queue[host].pop(0)
 						try: self.sendto(packet, host)
 						except: print('unable to send queued packet:', packet)
 			
@@ -331,6 +336,15 @@ class Server(socket.socket):
 		self.thread = threading.Thread()
 		self.thread.run = self.step
 		self.thread.start()
+	
+	# add a packet to the queue (to send to the specified host)
+	def add_to_queue(self, packet, host='all'):
+		if host == 'all':
+			for host in self.hosts:
+				if host:
+					self.queue[host].append(packet)
+		elif host:
+			self.queue[host].append(packet)
 	
 	# clear the socket's queue, return the list of packet received
 	def clear_requests(self):

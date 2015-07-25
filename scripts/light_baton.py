@@ -162,6 +162,7 @@ class LightCycle(Vehicle):
 		head.worldPosition = self.headpos.worldPosition
 
 	def init(self):
+		Vehicle.init(self)
 		self.motion = self.object.actuators["motion"]
 		self.motion.dLoc = Vector((0,0,0))
 		self.object["move"] = True
@@ -180,6 +181,7 @@ class LightCycle(Vehicle):
 		Vehicle.exit(self, character)
 
 	def updateCont(self, com):
+		Vehicle.updateCont(self, com)
 		#print(self.armature.meshes[0].materials)
 		onfloor = self.floor.sensors[0].status # seul capteur
 		obstacle = self.front.sensors[0].status # seul capteur
