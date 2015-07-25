@@ -246,6 +246,7 @@ class Client(socket.socket):
 						if 'id' in dump and dumptype in (bm.marker_character, bm.marker_item, bm.marker_vehicle, bm.marker_object) :
 							bm.last_backup[dumptype] = dump
 							bm.unloaded.append(dump['id'])
+							if dump['id'] == bm.max_id:  bm.max_id += 1
 				
 				
 				elif similar(packet, b'authentication\0'):
@@ -308,6 +309,12 @@ class Client(socket.socket):
 	# add a packet to the queue, all packet in the queue will be sent at the next step, and sent until server receive it.
 	def add_to_queue(self, packet):
 		self.queue.append(packet)
+	
+	def created_object(self, obj):
+		dump = bm.dump_this(obj)
+		if dump:
+			packet = b'newobject\0'+obj[bm.marker_property]+b'\0'+pickle.dumps(dump)
+			self.send(packet)
 		
 	
 	# clear the socket's queue, return the list of packet received
