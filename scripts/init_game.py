@@ -128,21 +128,25 @@ if game_file:
 				break
 
 if fp_dump == None :
-	spawner = scene.addObject("first player spawn", scene.active_camera)
-	if game_server:
-		spawner['character_name'] = game_server[2]
-	else:
-		spawner['character_name'] = config['nickname']
-	spawner['skin'] = config['skin']
-else:
-	if game_server:
-		config['nickname'] = game_server[2]
-		config['skin'] = fp_dump['skin']
-		config['object_id'] = fp_dump['id']
-	scene.active_camera.worldPosition = fp_dump['pos']
-	scenes.thread_loader()
-	backup_manager.thread_loader()
-	avatar.init_noauto(config, fp_dump)
+	fp_dump = {
+		'name': config['nickname'],
+		'skin': config['skin'],
+		'id':   backup_manager.max_id,
+		'pos':  (0,0,0), 
+		'rot':  (0,0,0), 
+		'inventory': {'hand':None},
+		}
+	backup_manager.max_id += 1
+
+if game_server:
+	config['nickname'] = game_server[2]
+	config['skin'] = fp_dump['skin']
+	config['object_id'] = fp_dump['id']
+scene.active_camera.worldPosition = fp_dump['pos']
+scenes.thread_loader()
+backup_manager.thread_loader()
+avatar.init_noauto(config, fp_dump)
+
 
 ## the game could be started ##
 root = scene.addObject("root", scene.active_camera)
