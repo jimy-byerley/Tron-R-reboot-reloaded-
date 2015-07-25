@@ -94,6 +94,8 @@ class Server(socket.socket):
 	                       # of the host that emited this packet.
 	                       # return True to erase the packet without executing other callbacks on it.
 	                       # the callbacks are executed in the list order.
+	on_register = []       # list of functions callback, each are called when a new user is registered.
+	                       # signature:   void func(server, (ip, port), (user, password))
 	
 	queue = {}             # list of packet to send after every threatment of incomming packet (send whenever there 
 	                       # is no packet received). Indexed by host (ip, port).
@@ -283,6 +285,8 @@ class Server(socket.socket):
 								debugmsg('new session for host %s.' % host[0])
 								self.sendto(subject + b'password accepted', host)
 								self.add_client(host, user)
+								for callback in self.on_register:
+									callback(self, host, (user, password))
 						else:
 							self.delays[host] = time.time() + self.bad_password_timeout
 							self.sendto(subject + b'password rejected', host)
