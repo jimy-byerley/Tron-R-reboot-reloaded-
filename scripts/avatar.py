@@ -172,9 +172,11 @@ def init(cont) :
 	
 	first_player = Avatar(owner["character_name"], owner["skin"])
 	first_player.spawn(owner)
-	first_player.setCameraActive("tps")
 	first_player.setCameraActive("fps")
-	#owner.setParent(first_player.box)
+	# this object was not existing in the game backup, so signal its creation
+	# this function can serve when a new player register, and have no skin
+	if bge.logic.client:
+		bge.logic.client.created_object(first_player.box)
 
 def init_noauto(game_config, player_dump) :
 	global first_player
@@ -189,7 +191,6 @@ def init_noauto(game_config, player_dump) :
 	scene = bge.logic.getCurrentScene()
 	first_player = Avatar(game_config['nickname'], game_config["skin"])
 	first_player.spawn(scene.active_camera, existing=fp_obj)
-	first_player.setCameraActive("tps")
 	first_player.setCameraActive("fps")
 
 def post_init():
