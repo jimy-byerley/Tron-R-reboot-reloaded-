@@ -988,3 +988,6 @@ def init() :
 	character = Character(owner["character_name"], owner["skin"])
 	character.spawn(owner)
 	owner.endObject()
+	# this object was not existing in the game backup, so signal its creation
+	if bge.logic.client:
+		bge.logic.client.created_object(character.box)
