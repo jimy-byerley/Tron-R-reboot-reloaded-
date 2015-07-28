@@ -68,11 +68,12 @@ scenes = [
 	#      func( rule ) -->  True or False (shoud be loaded or not). rule is the line as described bellow.
 	# be carefull because scene dependencies of a dependency will also be loaded with its dependencies.
 	# coordinates (xyz)    file name             function to decide of loading    list of dependencies (other scenes)
-	((1000,0,0),    "small-arena-outside.blend",      on_distance(500),       ("system.blend",)),
-	((0,0,0),       "town-part-00.blend",             on_distance(100),        ("system.blend",)),
-	((50,0,0),      "town-part-01.blend",             on_distance(100),        ("system.blend",)),
-	((80,-100,0),   "town-part-02.blend",             on_distance(100),        ("system.blend",)),
-	((0,0,0),       "system.blend",                   None,                   ()),
+	((1000,0,0),       "small-arena-outside.blend",      on_distance(500),        ("system.blend",)),
+	((-7700,3000,140), "small-grid-outlands.blend",      on_distance(800),        ("system.blend",)),
+	((0,0,0),          "town-part-00.blend",             on_distance(100),        ("system.blend",)),
+	((50,0,0),         "town-part-01.blend",             on_distance(100),        ("system.blend",)),
+	((80,-100,0),      "town-part-02.blend",             on_distance(100),        ("system.blend",)),
+	((0,0,0),          "system.blend",                   None,                   ()),
 ]
 
 
