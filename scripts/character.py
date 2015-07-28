@@ -559,6 +559,8 @@ class OfflineCharacter(object) :
 	inair_laststate = False
 	item_toggle_date = 0.
 	helmet_toggle_date = 0.
+	
+	move_speed = 0.
 
 	
 	def __init__(self, name, skin_name="clu") :
@@ -805,9 +807,9 @@ class OfflineCharacter(object) :
 		self.box.worldOrientation = self.orient
 
 
-	def vehicleCommand(self, comlist):
+	def vehicleCommand(self, speed, yaw, breaks):
 		if self.vehicle:
-			self.vehicle['class'].updateCont(comlist)
+			self.vehicle['class'].updateControl(speed, yaw, breaks)
 	
 
 class Character(OfflineCharacter):
