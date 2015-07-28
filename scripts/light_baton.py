@@ -67,7 +67,7 @@ class LightBaton(Item):
 			cam = bge.logic.getCurrentScene().active_camera
 			vec = self.getOwnerObject().worldPosition - cam.worldPosition
 			dev.listener_location = vec
-			dev.volume = 0.3
+			dev.volume = 0.1
 			dev.play(sound)
 			
 			holo = self.object.children[0]
@@ -91,7 +91,7 @@ class LightBaton(Item):
 			cam = bge.logic.getCurrentScene().active_camera
 			vec = self.getOwnerObject().worldPosition - cam.worldPosition
 			dev.listener_location = vec
-			dev.volume = 0.3
+			dev.volume = 0.1
 			
 			# spawn the cycle
 			skin = self.getOwner().skin
@@ -131,9 +131,6 @@ class LightBaton(Item):
 	def action2(self):
 		print(self.object['uniqid'])
 		obj = bge.logic.getCurrentScene().objects[self.object.name]
-		print(obj)
-		print(obj == self.object)
-		print(obj['uniqid'])
 
 
 def item_init():
@@ -146,8 +143,17 @@ def item_init():
 
 
 class LightCycle(Vehicle):
-	reach = 2 # time to reach the maximal speed (~)
+	# vehicle caracteristics
+	max_speed = 100    # m/s
+	max_yaw = pi/4     # rad/m
+	max_accel = 20     # maximum acceleration m/s^2
+	
+	reach_stability = 0.1  # second
+	reach_yaw = 0.1
+	reach_tilt = 0.6
+	
 	animup = 10
+	
 	def enter(self, character, place):
 		Vehicle.enter(self, character, place)
 		armature = self.driver['class'].skin.armature
@@ -163,9 +169,6 @@ class LightCycle(Vehicle):
 
 	def init(self):
 		Vehicle.init(self)
-		self.motion = self.object.actuators["motion"]
-		self.motion.dLoc = Vector((0,0,0))
-		self.object["move"] = True
 		for child in self.object.children:
 			if "floor sensor" in child:
 				self.floor = child
@@ -180,59 +183,69 @@ class LightCycle(Vehicle):
 		head.localPosition = self.oldheadpos
 		Vehicle.exit(self, character)
 
-	def updateCont(self, com):
-		Vehicle.updateCont(self, com)
-		#print(self.armature.meshes[0].materials)
-		onfloor = self.floor.sensors[0].status # seul capteur
-		obstacle = self.front.sensors[0].status # seul capteur
-		date = time.time()
-		
-		if obstacle in (KX_INPUT_JUST_ACTIVATED, KX_INPUT_ACTIVE):
-			self.motion.dLoc = Vector((0,0,0))
-			return
-		
-		if onfloor in (KX_INPUT_JUST_ACTIVATED, KX_INPUT_ACTIVE):
-			o = self.object.localOrientation.to_euler()
-			i = Euler((o.x,0,0)) # inclinaison
-			l = Vector((0.,0.,0.)) # vitesse lineaire
-			r = Vector((0.,0.,0.)) # vitesse de rotation
-			if com[FORD] :
-				l.y = .8
-				if com[BOOST] :
-					l.y = 1.
-				if com[BACK] :
-					i.x = pi/4
-			elif com[BACK] :
-				if self.motion.dLoc.y > 0: l.y = -0.2
-			if self.motion.dLoc.y > 0.05:
-				if com[LEFT] :
-					r.z = 1.1
-					i.y = -0.8
-				if com[RIGHT] :
-					r.z = -1.1
-					i.y = 0.8
-			
-			dt = date-self.timer
-			self.motion.dLoc = self.motion.dLoc*(1-dt/self.reach) + l*dt/self.reach
-			o.x = o.x*(1-dt*3) + i.x*dt*3
-			o.y = o.y*(1-dt*3) + i.y*dt*3
-			#if i.x : o.x = i.x
-			#if i.y : o.y = i.y
-			self.object.localOrientation = o
-			#print(o)
-			r.rotate(Euler((-o.x, -o.y, 0)))
-			self.motion.dRot = r*dt
-			if self.animup == 10:
-				self.animup = 0
-				s = self.motion.dLoc.y
-				current = self.armature.getActionFrame(0)%9
-				self.armature.playAction("light cycle running", current, current+9, speed=s, layer=0, play_mode=KX_ACTION_MODE_LOOP)
-			else : self.animup += 1
-			self.object['move'] = True
-			self.timer = date
+	def updateControl(self, speed, yaw, breaks, netsync=True):
+		if speed > self.max_speed:    speed = self.max_speed
+		elif speed < 0:               speed = 0
+		if yaw > self.max_yaw: yaw = self.max_yaw
+		if yaw < -self.max_yaw: yaw = -self.max_yaw
+		self.object['speed']  = speed
+		self.object['yaw']    = yaw
+		self.object['breaks'] = breaks
+		Vehicle.updateControl(self, speed, yaw, breaks, netsync)
 
 
-def cycle_init():
-	owner = bge.logic.getCurrentController().owner
+def cycle_init(cont):
+	owner = cont.owner
 	owner['class'] = LightCycle(owner, owner["vehiclename"])
 	owner['class'].init()
+
+def cycle_update(cont):
+	object = cont.owner
+	cycle = object['class']
+	onfloor = cycle.floor.sensors[0].status
+	obstacle = cycle.front.sensors[0].status
+	
+	speed  = object['speed']
+	yaw    = object['yaw']
+	breaks = object['breaks']
+
+	velocity = object.localLinearVelocity
+	orientation = object.localOrientation.to_euler()
+	angular = object.localAngularVelocity
+	mass = object.mass
+	
+	if onfloor in (KX_INPUT_JUST_ACTIVATED, KX_INPUT_ACTIVE):
+		# acceleration
+		if speed < velocity.y:
+			acceleration = -cycle.max_accel/10
+		elif speed > velocity.y:
+			acceleration = cycle.max_accel
+		propulsion = mass * acceleration
+		lateral_reaction = -mass *  velocity.x / cycle.reach_stability
+		
+		# tilt rotation
+		if yaw > 0.1:    inclin = -pi/5
+		elif yaw < -0.1: inclin = pi/5
+		else:            inclin = 0
+			
+		tilt = (inclin - orientation.y) / cycle.reach_tilt
+		
+		# yaw speed
+		torque_yaw = mass * cycle.max_yaw * velocity.y / cycle.reach_yaw
+		if angular.z / velocity.y > cycle.max_yaw or abs(yaw - object.localAngularVelocity.z) < pi/12:
+			torque_yaw = 0
+		elif yaw < angular.z:
+			torque_yaw = -torque_yaw
+		
+		# apply physic changes
+		object.applyForce((lateral_reaction, propulsion, 0.), True)
+		object.applyTorque((sin(orientation.y)*torque_yaw, 0., cos(orientation.y)*torque_yaw), True)
+		object.localAngularVelocity.y = tilt
+		
+		# update wheels animation with vehicle speed
+		if cycle.animup == 20:
+			cycle.animup = 0
+			s = 7*velocity.y / cycle.max_speed
+			current = cycle.armature.getActionFrame(0)%60
+			cycle.armature.playAction("light cycle running", current, current+59, speed=s, layer=0, play_mode=KX_ACTION_MODE_LOOP)
+		else : cycle.animup += 1
