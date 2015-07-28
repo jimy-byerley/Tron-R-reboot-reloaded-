@@ -336,19 +336,21 @@ def keyboard_input() :
 			#first_player.orient.z = -x
 
 	if first_player.vehicle :
-		com = copy.deepcopy([False]*7)
+		speed = 0.
+		yaw = 0.
+		breaks = False
 		if _touch(sens, config.vehicle.keyford):
-			com[vehicle.FORD] = True
+			speed = first_player.vehicle['class'].max_speed * 2/3
 		if _touch(sens, config.vehicle.keyleft):
-			com[vehicle.LEFT] = True
+			yaw = 3.14
 		if _touch(sens, config.vehicle.keyright):
-			com[vehicle.RIGHT] = True
+			yaw = -3.14
 		if _touch(sens, config.vehicle.keyback):
-			com[vehicle.BACK] = True
+			breaks = True
 		if _touch(sens, config.vehicle.keyboost):
-			com[vehicle.BOOST] = True
+			speed = first_player.vehicle['class'].max_speed
 
-		first_player.vehicleCommand(com)
+		first_player.vehicleCommand(speed, yaw, breaks)
 
 
 
