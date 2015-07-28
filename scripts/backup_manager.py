@@ -227,6 +227,8 @@ def dump_this(obj):
 			else: i += 1
 		last_backup['objects'].append(dump)
 		return dump
+	
+	else: return None
 
 
 def dump_all(scenestodump=['Scene']):
