@@ -50,21 +50,21 @@ network.Server.callbacks.append(avatar_callback)
 def vehicle_callback(server, packet, host):
 	if similar(packet, b'vehicle\0'):
 		if packet.count(b'\0') < 3: return True
-		idbytes = packet.split(b'\0')[2]
+		idbytes = packet.split(b'\0', maxsplit=3)[2]
 		if idbytes not in server.datas.keys(): 
-			print('error: avatar_callback: avatar', idbytes, "doesn't exist")
+			print('error: vehicle_callback: vehicle', idbytes, "doesn't exist")
 			return True
 	
-		# if host has no known avatar, then register it.
+		# if host has no known vehicle, then register it.
 		if host not in server.vehicles.keys():
 			for other in server.hosts:
 				if other in server.vehicles.keys() and server.vehicles[other] == idbytes: 
-					print('error: avatar_callback: an other host got already avatar', idbytes)
+					print('error: vehicle_callback: an other host drive already a vehicle', idbytes)
 					return True
 			server.vehicles[host] = idbytes
 			server.datas[idbytes].host = server.hosts.index(host)
-		# only registered avatars associated with the good host can provid theses informations
-		elif server.avatars[host] == idbytes:
+		# only registered vehicles associated with the good host can provide theses informations
+		elif server.vehicles[host] == idbytes:
 			# send to all except to source host
 			for dst in server.hosts:
 				if dst != host and dst != 'all': server.add_to_queue(packet, dst)
@@ -75,3 +75,4 @@ def vehicle_callback(server, packet, host):
 		
 
 network.Server.vehicles = {} # list of ID's of vehicles for each host who drive (referenced by host)
+network.Server.callbacks.append(vehicle_callback)
