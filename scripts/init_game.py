@@ -5,6 +5,7 @@ import sys, os, signal
 config_file = None
 game_file = None
 game_server = None
+launcher_process = None
 
 # game arguments are passed after a '-'
 i = 0
@@ -33,6 +34,9 @@ while i < len(sys.argv):
 		else:
 			game_server = (sys.argv[i+1], int(sys.argv[i+2]), sys.argv[i+3], sys.argv[i+4])
 		i += 4
+	elif arg in ('-p', '--process'):
+		launcher_process = int(sys.argv[i+1])
+		i += 1
 	else:
 		print('unknown argument', arg)
 		#bge.logic.endGame()
@@ -86,8 +90,9 @@ bge.logic.config = config
 
 ## parent process (menu) stop, to optimize CPU consumption ##
 
-if 'game_launcher_menu' in config and config['game_launcher_menu']:
-	os.kill(os.getppid(), signal.SIGTSTP)
+bge.logic.launcher_process = launcher_process
+if launcher_process != None and 'game_launcher_stop' in config and config['game_launcher_stop']:
+	os.kill(launcher_process, signal.SIGTSTP)
 
 ### thread usage ###
 
