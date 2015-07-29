@@ -1,5 +1,5 @@
 import bge
-import sys
+import sys, os, signal
 
 # use argv
 config_file = None
@@ -83,6 +83,11 @@ else:
 		config[name] = eval(value)
 
 bge.logic.config = config
+
+## parent process (menu) stop, to optimize CPU consumption ##
+
+if 'game_launcher_menu' in config and config['game_launcher_menu']:
+	os.kill(os.getppid(), signal.SIGTSTP)
 
 ### thread usage ###
 

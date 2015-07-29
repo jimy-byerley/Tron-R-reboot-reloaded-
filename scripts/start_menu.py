@@ -452,6 +452,7 @@ def init(cont):
 		play_mode=KX_ACTION_MODE_PLAY)	
 	
 	# load config
+	global config
 	config = read_config()
 	scene.objects['net_address']['Text']  = config['network_address']
 	scene.objects['net_port']['Text']     = config['network_port']
