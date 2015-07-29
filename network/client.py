@@ -20,8 +20,10 @@ This file is part of Tron-R.
 import bge
 import threading, socket, time, pickle, copy
 from network import *
+from mathutils import *
 import backup_manager as bm
 
+vectornull = Vector((0., 0., 0.))
 
 def get_object_id(kx_object):
 	""" 
@@ -106,7 +108,7 @@ def synchronize(cont):
 
 class Client(socket.socket):
 	packet_size   = 1024     # max size of buffers to receive from the server
-	update_period = 1.5      # minimum time interval between 2 update from the server, of objects positions
+	update_period = 0.5      # minimum time interval between 2 update from the server, of objects positions
 	step_time     = 0.05     # maximum time for each step
 	callback_error = True    # if True, raise callback errors instead of continuing the step execution
 	# extendable list of properties to exclude of syncs (to avod security breachs)
@@ -123,6 +125,7 @@ class Client(socket.socket):
 	queue = []             # list of packet to send after every threatment of incomming packet (send whenever 
 	                       # there is no packet received)
 	                       # each packet is indexed by a number and is removed from the queue only when client answer the number
+	oldphysics = {}        # list of the four physic properties synchronized, for each object id (bytes)
 	
 	def __init__(self, remote, scene=None, user="", password=""):
 		self.remote = remote
@@ -190,9 +193,27 @@ class Client(socket.socket):
 						physics = pickle.loads(packet[9+len(idbytes):])
 						# modify in game object
 						if obj:
-							(obj.worldPosition,        obj.worldOrientation,
-							obj.worldLinearVelocity,  obj.worldAngularVelocity,
-							parent)     = physics
+							(remote_pos, remote_ori, remote_linV, remote_angV, parent) = physics
+							rpos = Vector(remote_pos)
+							rori = Vector(remote_ori)
+							rlinV = Vector(remote_linV)
+							rangV = Vector(remote_angV)
+							# on new registered objects
+							if idbytes not in self.oldphysics.keys():  
+								self.oldphysics[idbytes] = [vectornull, vectornull, vectornull, vectornull]
+							(opos, oori, olinV, oangV) = self.oldphysics[idbytes]
+							# update current scene, only if the difference between the network and the scene is too huge
+							if (rpos-obj.worldPosition).magnitude > (rpos-opos).magnitude:
+								obj.worldPosition = rpos
+							if (rlinV-obj.worldLinearVelocity).magnitude > (rlinV-olinV).magnitude:
+								obj.worldLinearVelocity = rlinV
+							if (rori-Vector(obj.worldOrientation.to_euler()[:])).magnitude > (rori - oori).magnitude:
+								obj.worldOrientation = Euler(remote_ori)
+							if (rangV-obj.worldAngularVelocity).magnitude > (rangV-oangV).magnitude:
+								obj.worldAngularVelocity = rangV
+							# save new old values
+							self.oldphysics[idbytes] = [rpos, rori, rlinV, rangV]
+							
 							#obj.setParent(parent)
 						# modify game backup
 						if id in bm.unloaded:
