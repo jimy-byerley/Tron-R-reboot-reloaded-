@@ -77,12 +77,13 @@ def start_game(blenderoptions='', gameoptions=''):
 		f = open(bge.logic.expandPath('//../blenderplayer_path.txt'), 'r')
 		blenderplayer = f.read()[:-1] +'/blenderplayer'
 		f.close()
-		command = '%s -w %d %d %s %s - %s -l %s' % (
+		command = '%s -w %d %d %s %s - %s -l %s -p %d' % (
 			blenderplayer,
 			width, height,
 			bge.logic.expandPath('//main.blend'),
 			blenderoptions, gameoptions,
 			bge.logic.expandPath('//../backup-exemple.txt'),
+			os.getpid(),
 		)
 		print(command)
 		error = os.system(command)
@@ -91,12 +92,13 @@ def start_game(blenderoptions='', gameoptions=''):
 		f = open(bge.logic.expandPath('//..\\blenderplayer_path.txt'), 'r')
 		blenderplayer = f.read()[:-1] +'\\blenderplayer'
 		f.close()
-		command = '%s -w %d %d %s %s - %s -l %s' % (
+		command = '%s -w %d %d %s %s - %s -l %s -p %d' % (
 			blenderplayer,
 			width, height,
 			bge.logic.expandPath('//main.blend'),
 			blenderoptions, gameoptions,
 			bge.logic.expandPath('//..\\backup-exemple.txt'),
+			os.getpid(),
 		)
 		print(command)
 		os.system(command)
@@ -461,12 +463,15 @@ def init(cont):
 	
 
 def text_enter(keyboard, cursor, entry):
+	play_sound = False
 	# arrow keys to change cursor location
 	if keyboard.getKeyStatus(LEFTARROWKEY) == KX_INPUT_JUST_ACTIVATED:
 		if entry['cursor'] > 0: entry['cursor'] -= 1
+		play_sound = True
 	
 	elif keyboard.getKeyStatus(RIGHTARROWKEY) == KX_INPUT_JUST_ACTIVATED:
 		if entry['cursor'] < len(entry['Text']): entry['cursor'] += 1
+		play_sound = True
 
 	# caps key must be enabled in the program, if activated before, it will not take effect here.
 	elif keyboard.getKeyStatus(CAPSLOCKKEY) == KX_INPUT_JUST_ACTIVATED:
@@ -474,6 +479,7 @@ def text_enter(keyboard, cursor, entry):
 
 	# erase characters in edition mode
 	elif keyboard.getKeyStatus(BACKSPACEKEY) == KX_INPUT_JUST_ACTIVATED:
+		play_sound = True
 		place = entry['cursor']-1
 		if place >= 0:
 			text = entry['Text']
@@ -482,6 +488,7 @@ def text_enter(keyboard, cursor, entry):
 
 	# erase characters in suppression mode
 	elif keyboard.getKeyStatus(DELKEY) == KX_INPUT_JUST_ACTIVATED:
+		play_sound = True
 		place = entry['cursor']
 		text = entry['Text']
 		entry['Text'] = text[:place] + text[place+1:]
@@ -489,23 +496,26 @@ def text_enter(keyboard, cursor, entry):
 
 	# for french keyboard, ';' is shifted by '.' to type IP address
 	elif [135, KX_INPUT_JUST_ACTIVATED] in keyboard.events and ([RIGHTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events or [LEFTSHIFTKEY, KX_INPUT_ACTIVE] in keyboard.events):
+		play_sound = True
 		place = entry['cursor']
 		text = entry['Text']
 		entry['Text'] = text[:place] + '.' + text[place:]
 		entry['cursor'] += 1
 
-	# else, type character, becarefull with unvisibe characters!
-	elif keyboard.events[0][1] == KX_INPUT_JUST_ACTIVATED:
+	else: # threat all characters
 		shift = cursor['capslock']
 		for event in keyboard.events:
 			if event[0] == RIGHTSHIFTKEY or event[0] == LEFTSHIFTKEY: shift = not shift
-		char = EventToCharacter(keyboard.events[0][0], shift)
-		if char:
-			place = entry['cursor']
-			text = entry['Text']
-			entry['Text'] = text[:place] + char + text[place:]
-			entry['cursor'] += 1
-	
+		for event in keyboard.events:
+			if event[1] == KX_INPUT_JUST_ACTIVATED:
+				char = EventToCharacter(event[0], shift)
+				if char:
+					play_sound = True
+					place = entry['cursor']
+					text = entry['Text']
+					entry['Text'] = text[:place] + char + text[place:]
+					entry['cursor'] += 1
+
 	if entry != cursor.parent:
 		cursor.setParent(entry)
 		cursor.localOrientation = Euler((-pi/2, 0., 0.))
@@ -513,6 +523,7 @@ def text_enter(keyboard, cursor, entry):
 	#cursor.localPosition = (entry['cursor']*0.6+0.5, 0, 0)   # for standard monopsaced font
 	
 	# play sound
-	sound = aud.Factory(sound_path+'/share/interface-rollover.mp3')
-	audio.volume = 0.1
-	audio.play(sound)
+	if play_sound:
+		sound = aud.Factory(sound_path+'/share/interface-rollover.mp3')
+		audio.volume = 0.1
+		audio.play(sound)
