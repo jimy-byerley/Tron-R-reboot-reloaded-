@@ -81,7 +81,7 @@ def callback_update(cont):
 		name = to_disable.pop(0)
 		for i in range(len(filters)):
 			if filters[i][FILTER_SHORTNAME] == name:
-				print('module \"%s\": disable filter \'%s\'.' % (__name__, name))
+				#print('module \"%s\": disable filter \'%s\'.' % (__name__, name))
 				actuator = cont.actuators[0]
 				actuator.mode = bge.logic.RAS_2DFILTER_DISABLED
 				actuator.shaderText = ""
@@ -92,7 +92,7 @@ def callback_update(cont):
 		name = to_enable.pop(0)
 		for i in range(len(filters)):
 			if filters[i][FILTER_SHORTNAME] == name:
-				print('module \"%s\": enable filter \'%s\'.' % (__name__, name))
+				#print('module \"%s\": enable filter \'%s\'.' % (__name__, name))
 				filter_code = ""
 				try: f = open(bge.logic.filters_path+'/'+filters[i][FILTER_FILE], 'r')
 				except OSError: 
