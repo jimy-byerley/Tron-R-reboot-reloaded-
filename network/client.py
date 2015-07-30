@@ -180,7 +180,7 @@ class Client(socket.socket):
 						if obj:
 							if prop in obj :
 								msg = b'setprop\0' + idbytes + b'\0'+ propname + b'\0' + pickle.dumps(obj[prop])
-								self.sendto(msg, host)
+								self.send(msg)
 						else:
 							self.send(b'unknown\0'+idbytes)
 				
@@ -269,6 +269,18 @@ class Client(socket.socket):
 							bm.unloaded.append(dump['id'])
 							if dump['id'] == bm.max_id:  bm.max_id += 1
 				
+				elif similar(packet, b'unsync\0') and zeros >= 2:
+					mode, id = packet.split(b'\0', maxsplit=3)[1:3]
+					if id.isdigit():
+						object = bm.get_object_by_id(int(id))
+						if object:
+							if mode == b'meca' and marker_property_physic in object: 
+								object[marker_property_physic] = False
+							elif mode == b'prop' and marker_property_property in object:
+								property = packet.split(b'\0', maxsplit=4)[3]
+								if property in object[marker_property_property]:
+									object[marker_property_property].pop(object[marker_property_property].index(property))
+				
 				
 				elif similar(packet, b'authentication\0'):
 					msg = words[1]
@@ -322,10 +334,32 @@ class Client(socket.socket):
 	# tell the server to synchronize the object physic properties
 	def sync_physic(self, object):
 		self.send(b'getmeca\0'+ str(bm.get_object_id(object)).encode())
+		# send local version of this part of the scene
+		'''
+		if object.parent:  parent = object.parent.name
+		else:           parent = None
+		idbytes = str(bm.get_object_id(object)).encode()
+		msg = b'setmeca\0' + idbytes + b'\0' + pickle.dumps((
+			object.worldPosition[:],       object.worldOrientation.to_euler()[:],
+			object.worldLinearVelocity[:], object.worldAngularVelocity[:],
+			parent))
+		self.send(msg)
+		'''
 	
 	# tell the server th synchronize the object property (given by name)
 	def sync_property(self, object, property):
 		self.send(b'getprop\0'+ str(bm.get_object_id(object)).encode() +b'\0'+ property.encode())
+		'''
+		idbytes = str(bm.get_object_id(object)).encode()
+		msg = b'setprop\0' + idbytes + b'\0'+ property.encode() + b'\0' + pickle.dumps(object[property])
+		self.send(msg)
+		'''
+	
+	def unsync_physic(self, object):
+		self.send(b'unsync\0meca\0' + str(bm.get_object_id(object)).encode())
+	
+	def unsync_property(self, object, property):
+		self.send(b'unsync\0prop\0' + str(bm.get_object_id(object)).encode() +b'\0'+ property.encode())
 	
 	# add a packet to the queue, all packet in the queue will be sent at the next step, and sent until server receive it.
 	def add_to_queue(self, packet):

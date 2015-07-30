@@ -65,7 +65,7 @@ class ignore:
 class Server(socket.socket):
 	packet_size          = 1024
 	max_client           = 30      # maximum number of clients (can be set at runtime to increase number of clients but doesn't quick connected clients
-	update_period        = 1.5     # maximum time (s) between 2 server update communication (update of client datas)
+	update_period        = 0.5     # maximum time (s) between 2 server update communication (update of client datas)
 	step_time            = 0.8     # maximum time in execution of each step
 	bad_password_timeout = 3       # time the client should wait when get a wrong password (second)
 	multiple_sessions    = False   # set to True, allow multiple host to use the same user (account and password)
@@ -232,9 +232,21 @@ class Server(socket.socket):
 								# send to all client the information of a new object
 								reponse = b'newobject\0'+ dumptype +b'\0'+ pickle.dumps(dump)
 								for h in self.hosts:
-									if h != host: self.send(reponse, host)
+									if h and h != host: self.send(reponse, host)
 								# change ID on client if necessary
 								if original != id: self.send(b'changeid\0'+ original +b'\0'+ id, host)
+					
+					elif similar(packet, b'unsync\0') and zeros >= 2:
+						mode, id = packet.split(b'\0', maxsplit=3)[1:3]
+						if id in self.datas.keys():
+							if self.datas[id].host == host:
+								if mode == b'meca':
+									self.datas[id].physics = False
+								elif mode == b'prop':
+									prop = packet.split(b'\0', maxsplit=4)[3]
+									del self.datas[id].properties[prop]
+								for h in self.hosts:
+									if h and h != host: self.send(packet)
 						
 					
 					elif similar(packet, PACKET_STOP):
