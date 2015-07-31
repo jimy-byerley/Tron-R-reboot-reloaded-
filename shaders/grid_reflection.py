@@ -70,20 +70,21 @@ own['oldpos'] = pos
 bgl.glCullFace(bgl.GL_FRONT)
 
 #plane equation
-normal = Vector((0., 0., 1.)) * own.worldTransform # get Z axis vector of the plane in world coordinates
+#normal = own.getAxisVect((0.0, 0.0, 1.0)) # get Z axis vector of the plane in world coordinates
+#normal = Vector((0.0, 0.0, 1.0)) * own.worldOrientation
 
-D = -own.position.project(normal).magnitude #closest distance from center to plane
-V = (activecam.position-own.position).normalized().dot(normal) #VdotN to get frontface/backface
+#D = -own.position.project(normal).magnitude #closest distance from center to plane
+#V = (activecam.position-own.position).normalized().dot(normal) #VdotN to get frontface/backface
 
 #invert normals when backface
-if V<0:
-	normal = -normal
+#if V<0:
+#	normal = -normal
 
 
 # making a clipping plane buffer
-plane = bgl.Buffer(bgl.GL_DOUBLE, [4], [-normal[0], -normal[1], -normal[2], -D+offset])
-bgl.glClipPlane(bgl.GL_CLIP_PLANE0, plane)
-bgl.glEnable(bgl.GL_CLIP_PLANE0)
+#plane = bgl.Buffer(bgl.GL_DOUBLE, [4], [-normal[0], -normal[1], -normal[2], -D+offset])
+#bgl.glClipPlane(bgl.GL_CLIP_PLANE0, plane)
+#bgl.glEnable(bgl.GL_CLIP_PLANE0)
 
 # rendering the reflection texture in tex channel 0
 if 'reflection' not in own:
