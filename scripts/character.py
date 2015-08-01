@@ -348,7 +348,7 @@ class Skin(object) :
 		"""
 		item peut etre un KX_GameObject ou bien l'indice de l'item, si item egal "hand", l'objet tenu en main est alors détaché
 		"""
-		if item == "hand" : # cas particulier de l'item placé dans la main
+		if item == "hand" or item == self.handitem: # cas particulier de l'item placé dans la main
 			self.handitem.removeParent()
 			self.handitem = None
 			return
@@ -474,7 +474,7 @@ class Skin(object) :
 			if item >= len(self.items): return
 			index = item
 			obj = self.items[index]
-		elif item == "hand" :
+		elif item == self.handobject or item == "hand" :
 			obj = self.handobject
 		elif type(item) == bge.types.KX_GameObject :
 			index = self.items.index(obj)
@@ -637,8 +637,10 @@ class OfflineCharacter(object) :
 
 	def disable(self):
 		self.box["active"] = False
+			
 	def enable(self):
 		self.box["active"] = True
+		
 	def isactive(self):
 		return self.box["active"]
 
@@ -920,10 +922,18 @@ class Character(OfflineCharacter):
 			else:      self.syncInfo(b'helmet', b'0')
 			OfflineCharacter.toggleHelmet(self, helmet)
 			# there is not need to increment helmet_toggle_date, because it is done in toggleHelmet()
+	
+	def disable(self):
+		if bge.logic.client: bge.logic.client.unsync_physic(self.box)
+		OfflineCharacter.disable(self)
+	
+	def enable(self):
+		if bge.logic.client: bge.logic.client.sync_physic(self.box)
+		OfflineCharacter.enable(self)
 
 
 # execute all the characters actions resquested by the server, without distincition of if it is or not an offline character.
-def client_callback(server, packet):
+def client_callback(interface, packet):
 	if client.similar(packet, b'character\0'):
 		if packet.count(b'\0') < 3: return True
 		info, uniqid = packet.split(b'\0')[1:3]

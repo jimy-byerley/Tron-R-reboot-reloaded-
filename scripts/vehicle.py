@@ -50,6 +50,7 @@ class Vehicle(object):
 	passengers = {}
 
 	sync_look = 0.
+	sync_command = 0.
 	
 	# values to implement ont each vehicle, to inform characters (NPC or players), or to use in internal fonctions
 	max_speed = 0 # (m/s)
@@ -58,6 +59,7 @@ class Vehicle(object):
 	def __init__(self, kxobject, name):
 		self.object = kxobject
 		self.name = name
+		self.object.setOcclusion(False, True)
 		for child in self.object.children:
 			if "vehicle place" in child:
 				place = child['vehicle place']
@@ -79,8 +81,8 @@ class Vehicle(object):
 
 	def enter(self, character, place, netsync=True):
 		# character est le kxobject du personnage, place est le kxobject (empty) sur lequel est attaché le perso
-		if netsync: self.syncInfo(b'enter', (bm.get_object_id(character), place.name))
 		if self.driver == None and place == self.driversplace:
+			if netsync: self.syncInfo(b'drive', str(bm.get_object_id(character)).encode())
 			self.driver = character
 			keyword = self.driversplace['vehicle place']+" "+self.name
 			if keyword in character['class'].skin.animations.keys() :
@@ -92,6 +94,7 @@ class Vehicle(object):
 			self.driver['class'].vehicle = self.object
 			
 		elif place in self.passengers.keys() and self.passengers[place] == None:
+			if netsync: self.syncInfo(b'enter', (bm.get_object_id(character), place.name))
 			self.passengers[place] = character
 			keyword = place['vehicle place']+" "+self.name
 			if keyword in character['class'].skin.animations.keys() :
@@ -104,7 +107,7 @@ class Vehicle(object):
 			
 
 	def exit(self, character, netsync=True):
-		self.syncInfo(b'exit', b'')
+		self.syncInfo(b'exit', bm.get_object_id(character))
 		if character == self.driver :
 			self.driver = None
 			character['class'].vehicle = None
@@ -128,7 +131,9 @@ class Vehicle(object):
 		yaw:      the angular speed to reach, ... (radians per sec, float)
 		breaks:   vehicle breaks (bool)
 		"""
-		if netsync: self.syncInfo(b'command', (speed, yaw, breaks))
+		if netsync and self.sync_command < time.time():
+			self.syncInfo(b'command', (speed, yaw, breaks))
+			self.sync_command = time.time() + 0.1
 		
 
 	def updateLook(self, rotEuler, netsync=True):
@@ -139,31 +144,37 @@ class Vehicle(object):
 
 	def destroy(self, netsync=True):
 		if netsync: self.syncInfo(b'destroy', b'')
-		pass
 
 	def remove(self, netsync=True):
 		if netsync: self.syncInfo(b'remove', b'')
-		self.exit(self.driver)
+		if self.driver: self.exit(self.driver)
 		for passenger in self.passengers.values():
 			self.exit(passenger)
 		self.object.endObject()
 
 
-def client_callback(client, packet):
+def client_callback(interface, packet):
 	if client.similar(packet, b'vehicle\0'):
 		# then retreive vehicle
-		if packet.count(b'\0') < 3: return True
+		if packet.count(b'\0') < 3: 
+			print(-3)
+			return True
 		info, idbytes = packet.split(b'\0', maxsplit=3)[1:3]
-		data = packet[10+len(info)+len(idbytes)]
-		if not idbytes.isdigit(): return True
+		data = packet[10+len(info)+len(idbytes):]
+		if not idbytes.isdigit(): 
+			print(-2)
+			return True
 		uniqid = int(idbytes)
-		object = get_object_by_id(uniqid)
-		if not object: return True
+		object = bm.get_object_by_id(bge.logic.getCurrentScene(), uniqid)
+		if not object: 
+			print(-1)
+			return True
 		if 'class' not in object:
 			print('error: client_callback: vehicle', uniqid, "doesn't have any class")
 			return True
 		vehicle = object['class']
-	
+		
+		# treatment of informations
 		if info == b'look':
 			try: rotEuler = pickle.loads(data)
 			except: return True
@@ -171,29 +182,49 @@ def client_callback(client, packet):
 		
 		elif info == b'command':
 			try: speed, yaw, breaks = pickle.loads(data)
-			except: return True
+			except: 
+				print(1)
+				return True
+			print('vehicle command')
 			vehicle.updateControl(speed, yaw, breaks, netsync=False)
+		
+		elif info == b'drive':
+			if not data.isdigit(): return True
+			character = bm.get_object_by_id(bge.logic.getcurrentScene(), int(data))
+			if not character: return True
+			vehicle.enter(character, vehicle.driversplace, netsync=False)
 		
 		elif info == b'enter':
 			try: id, placename = pickle.loads(data)
-			except: return True
-			character = bm.get_object_by_id(id)
+			except: 
+				print(2)
+				return True
+			character = bm.get_object_by_id(bge.logic.getCurrentScene(), id)
 			place = None
 			if placename == vehicle.driversplace.name: place = vehicle.driversplace
 			for placeobject in vehicle.passengers.keys():
 				if placeobject.name == placename:
 					place = placeobject
 			if place and character:
+				print('vehicle enter')
 				vehicle.enter(character, place, netsync=False)
+			else:
+				print(3, place, character)
 		
 		elif info == b'exit':
-			if not data.isdigit(): return False
+			if not data.isdigit(): 
+				print(4)
+				return False
 			character = bm.get_object_by_id(int(data))
-			if not character: return False
-			vehicle.exit(character)
+			if not character:
+				print(5)
+				return False
+			print('vehicle exit')
+			vehicle.exit(character, netsync=False)
 		
 		elif info == b'destroy':
-			vehicle.destroy()
+			vehicle.destroy(netsync=False)
 			
 		elif info == b'remove':
-			vehicle.remove()
+			print('vehicle remove')
+			vehicle.remove(netsync=False)

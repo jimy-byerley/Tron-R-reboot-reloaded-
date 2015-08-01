@@ -27,8 +27,8 @@ def avatar_callback(server, packet, host):
 	
 		# if host has no known avatar, then register it.
 		if host not in server.avatars.keys():
-			for other in server.hosts:
-				if other in server.avatars.keys() and server.avatars[other] == idbytes: 
+			for other in server.avatars.keys():
+				if other in server.hosts and server.avatars[other] == idbytes: 
 					print('error: avatar_callback: an other host got already avatar', idbytes)
 					return True
 			server.avatars[host] = idbytes
@@ -50,29 +50,50 @@ network.Server.callbacks.append(avatar_callback)
 def vehicle_callback(server, packet, host):
 	if similar(packet, b'vehicle\0'):
 		if packet.count(b'\0') < 3: return True
-		idbytes = packet.split(b'\0', maxsplit=3)[2]
+		info, idbytes = packet.split(b'\0', maxsplit=3)[1:3]
 		if idbytes not in server.datas.keys(): 
 			print('error: vehicle_callback: vehicle', idbytes, "doesn't exist")
 			return True
-	
+		'''
 		# if host has no known vehicle, then register it.
 		if host not in server.vehicles.keys():
-			for other in server.hosts:
-				if other in server.vehicles.keys() and server.vehicles[other] == idbytes: 
+			for other in server.vehicles.keys():
+				if other in server.hosts and server.vehicles[other] == idbytes: 
 					print('error: vehicle_callback: an other host drive already a vehicle', idbytes)
 					return True
 			server.vehicles[host] = idbytes
 			server.datas[idbytes].host = server.hosts.index(host)
+			# to tell the client that it is this ID that is driven by this character
+			server.add_to_queue(b'drive\0'+str(server.hosts.index(host)).encode()+b'\0'+idbytes)
 		# only registered vehicles associated with the good host can provide theses informations
 		elif server.vehicles[host] == idbytes:
+			if info == b'destroy':
+				del server.vehicles[host]
 			# send to all except to source host
 			for dst in server.hosts:
 				if dst != host and dst != 'all': server.add_to_queue(packet, dst)
 		else:
 			return False
 		return True
-	return False
+		'''
+		data = server.datas[idbytes]
+		index = server.hosts.index(host)
+		if data.host != index: 
+			if data.host < index:
+				data.host = index # an instance works as a pointer
+			return True
 		
-
-network.Server.vehicles = {} # list of ID's of vehicles for each host who drive (referenced by host)
-network.Server.callbacks.append(vehicle_callback)
+		# on setting a new driver, the, use the same host to provide the vehicle informations
+		if info == b'drive':
+			if data.isdigit() and data in self.datas:
+				data.host = self.datas[data].host
+		
+		elif info == b'destroy' or info == b'remove':
+			del server.datas[idbytes]
+			return True
+		elif info == b'exit':
+			data.host = None
+		for dst in server.hosts:
+			if dst != host: server.add_to_queue(packet, dst)
+		
+	return False

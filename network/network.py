@@ -99,6 +99,7 @@ class Server(socket.socket):
 	
 	queue = {}             # list of packet to send after every threatment of incomming packet (send whenever there 
 	                       # is no packet received). Indexed by host (ip, port).
+	objects_created = {}   # list of creation dates of the created objects, indexed by id (byte) of the object
 	
 	
 	# put lan to False if you don't want to use lan interface
@@ -217,24 +218,35 @@ class Server(socket.socket):
 						try: dump = pickle.loads(dump)
 						except: pass
 						else:
-							if 'id' in dump:
+							if 'pos' in dump and 'id' in dump:
+								stop = True
 								original = dump['id']
-								# search for an higher ID
-								id = original
-								for key in self.datas.keys():
-									if key.isdigit() and int(key) >= id:
-										id = int(key) + 1
-								dump['id'] = id
-								# save object dump
-								data = obdata()
-								data.physics   = pickle.dumps((dump['pos'], dump['rot'], dump['velocity'], dump['angular']))
-								self.datas['id'] = data
-								# send to all client the information of a new object
-								reponse = b'newobject\0'+ dumptype +b'\0'+ pickle.dumps(dump)
-								for h in self.hosts:
-									if h and h != host: self.send(reponse, host)
-								# change ID on client if necessary
-								if original != id: self.send(b'changeid\0'+ original +b'\0'+ id, host)
+								idbytes = str(original).encode()
+								if idbytes in self.datas.keys() and idbytes in self.objects_created.keys() and self.objects_created[idbytes] < time.time()+10:
+									orig_pos = dump['pos']
+									try: data_pos = self.datas.physics
+									except: pass
+									else:
+										# if the distance between the two objects is upper than 0.5 m
+										if len(orig_pos) == 3 and len(data_pos) == 3 :
+											if (orig_pos[0]-data_pos[0])**2 + (orig_pos[1]-data_pos[1])**2 + (orig_pos[2]-data_pos[2])**2 > 0.25:
+												# search for an higher ID
+												id = original
+												for key in self.datas.keys():
+													if key.isdigit() and int(key) >= id:
+														id = int(key) + 1
+												dump['id'] = id
+												# save object dump
+												data = obdata()
+												data.physics   = pickle.dumps((dump['pos'], dump['rot'], dump['velocity'], dump['angular']))
+												self.datas['id'] = data
+												# send to all client the information of a new object
+												reponse = b'newobject\0'+ dumptype +b'\0'+ pickle.dumps(dump)
+												for h in self.hosts:
+													if h and h != host: self.send(reponse, host)
+												# change ID on client if necessary
+												self.send(b'changeid\0'+ original +b'\0'+ id, host)
+											
 					
 					elif similar(packet, b'unsync\0') and zeros >= 2:
 						mode, id = packet.split(b'\0', maxsplit=3)[1:3]

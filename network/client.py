@@ -255,6 +255,7 @@ class Client(socket.socket):
 						 idorigin, idtarget = int(idorigin), int(idtarget)
 						 obj = get_object_by_id(self.scene, idorigin)
 						 if obj: obj['uniqid'] = idtarget
+						 if obj: print(packet)
 				
 				# packet of kind:    newobject.dumptype.dump
 				elif similar(packet, b'newobject\0') and zeros >= 2:
@@ -265,6 +266,7 @@ class Client(socket.socket):
 					else:
 						dumptype = dumptype.decode()
 						if 'id' in dump and dumptype in (bm.marker_character, bm.marker_item, bm.marker_vehicle, bm.marker_object) :
+							print(packet)
 							bm.last_backup[dumptype] = dump
 							bm.unloaded.append(dump['id'])
 							if dump['id'] == bm.max_id:  bm.max_id += 1

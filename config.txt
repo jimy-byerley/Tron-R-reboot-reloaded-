@@ -12,3 +12,5 @@ network_address       "192.168.1.61"
 network_port          "30000"
 network_user          "Kevin Flynn"
 network_password      "machin"
+game_launcher_stop    True
+game_menu_stop        False

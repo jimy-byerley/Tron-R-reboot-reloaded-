@@ -72,7 +72,7 @@ class LightBaton(Item):
 			
 			holo = self.object.children[0]
 			holo.visible = True
-			self.cycle['class'].remove()
+			self.cycle['class'].remove(netsync=False)
 			self.cycle = None
 			holo.playAction("light baton prototype", 10, 0)
 			def t():
@@ -129,8 +129,8 @@ class LightBaton(Item):
 		self.activate_date = time.time()
 	
 	def action2(self):
-		print(self.object['uniqid'])
-		obj = bge.logic.getCurrentScene().objects[self.object.name]
+		if self.cycle: 
+			print(self.cycle['uniqid'])
 
 
 def item_init():

@@ -157,8 +157,7 @@ class IDDisc(Item):
 		def detach():
 			while int(armature.getActionFrame(2)) < anim[2]:
 				time.sleep(0.05)
-			#box["class"].drop()
-			box["class"].skin.detach("hand")
+			box["class"].skin.detach(self.object)
 			
 			wo = box["class"].camera_head.worldOrientation.to_euler()
 			orientation = Euler((-wo.y, wo.x, wo.z -pi/2))
