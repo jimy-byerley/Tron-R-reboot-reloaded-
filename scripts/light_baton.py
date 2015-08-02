@@ -221,7 +221,7 @@ def cycle_update(cont):
 		elif speed > velocity.y:
 			acceleration = cycle.max_accel
 		propulsion = mass * acceleration
-		lateral_reaction = -mass *  velocity.x / cycle.reach_stability
+		lateral_force = -mass * velocity.x / cycle.reach_stability
 		
 		# tilt rotation
 		if yaw > 0.1:    inclin = -pi/5
@@ -231,16 +231,15 @@ def cycle_update(cont):
 		tilt = (inclin - orientation.y) / cycle.reach_tilt
 		
 		# yaw speed
-		torque_yaw = mass * cycle.max_yaw * velocity.y / cycle.reach_yaw
-		if angular.z / velocity.y > cycle.max_yaw or abs(yaw - object.localAngularVelocity.z) < pi/12:
-			torque_yaw = 0
-		elif yaw < angular.z:
-			torque_yaw = -torque_yaw
+		if yaw > 0: yaw = min(cycle.max_yaw*velocity.y, yaw)
+		else:       yaw = max(-cycle.max_yaw*velocity.y, yaw)
 		
 		# apply physic changes
-		object.applyForce((lateral_reaction, propulsion, 0.), True)
-		object.applyTorque((sin(orientation.y)*torque_yaw, 0., cos(orientation.y)*torque_yaw), True)
+		object.applyForce((lateral_force, propulsion, 0.), True)
+		#object.applyTorque((0., sin(orientation.y)*torque_yaw, cos(orientation.y)*torque_yaw), True)
 		object.localAngularVelocity.y = tilt
+		#object.localAngularVelocity.x = yaw * sin(orientation.y)
+		object.localAngularVelocity.z = yaw * cos(orientation.y)
 		
 		# update wheels animation with vehicle speed
 		if cycle.animup == 20:
