@@ -27,6 +27,8 @@ import backup_manager as bm
 from bge.logic import *
 from bge.events import *
 
+HALFPI = math.pi/2
+
 class Avatar(character.Character) :
 	"""
 	Cette classe représente le joueur à la première personne sur cet ordinateur.
@@ -365,7 +367,16 @@ def mouse_input() :
 	own = cont.owner
 	sens = cont.sensors[0]
 
-	if first_player.menu_active: return
+	if first_player.menu_active:
+		# avoid view rotation when closing menu
+		mx -= sens.position[0] - WIN_MIDDLE_X
+		my -= sens.position[1] - WIN_MIDDLE_Y
+		return
+	if first_player.vehicle:
+		c = bge.logic.config['vehicle_free_view'] # float between 1.0 and 0.0, 1 means view is entirely free and is not depending from the vehicle orientation
+		vorient = first_player.vehicle.worldOrientation.to_euler()
+		mx = -(c*first_player.look.z + (1-c)*(vorient.z + first_player.look.z - first_player.orient.z)) / config.mouse.sensibility
+		first_player.orient.z = vorient.z
 
 	if _click(sens, config.interact.take) and first_player.getInteractor() : # l'utilisateur doit cliquer pour ramasser l'objet
 		obj = first_player.getInteractor()
@@ -383,23 +394,23 @@ def mouse_input() :
 	
 	mx += sens.position[0] - WIN_MIDDLE_X
 	my += sens.position[1] - WIN_MIDDLE_Y
-	x = (mx)*config.mouse.sensibility
-	y = (my)*config.mouse.sensibility
+	x = mx*config.mouse.sensibility
+	y = my*config.mouse.sensibility
 
-	if y > math.pi/2:
-		y = math.pi/2
+	if y > HALFPI:
+		y = HALFPI
 		my -= sens.position[1] - WIN_MIDDLE_Y
-	elif y < -math.pi/2:
-		y = -math.pi/2
+	elif y < -HALFPI:
+		y = -HALFPI
 		my -= sens.position[1] - WIN_MIDDLE_Y
 	if not first_player.isactive():
 		x += first_player.orient.z
-		if x > math.pi/2:
-			x = math.pi/2
-			mx -= sens.position[0] - WIN_MIDDLE_X
-		elif x < -math.pi/2:
-			x = -math.pi/2
-			mx -= sens.position[0] - WIN_MIDDLE_X
+		if x > HALFPI:
+			x = HALFPI
+			mx = (HALFPI - first_player.orient.z)/config.mouse.sensibility
+		elif x < -HALFPI:
+			x = -HALFPI
+			mx = (-HALFPI - first_player.orient.z)/config.mouse.sensibility
 		x -= first_player.orient.z
 	first_player.lookAt(mathutils.Euler((0, y, -x)))
 
@@ -417,7 +428,7 @@ def mouse_over_item(cont):
 		menu_item_selected = owner
 		cursor.setParent(owner)
 		cursor.localPosition = (-1., -0.1, 0)
-		cursor.localOrientation = mathutils.Euler((-math.pi/2, 0., 0.))
+		cursor.localOrientation = mathutils.Euler((-HALFPI, 0., 0.))
 		# play sound
 		sound = aud.Factory(bge.logic.sounds_path+'/share/interface-rollover.mp3')
 		audio = aud.device()
