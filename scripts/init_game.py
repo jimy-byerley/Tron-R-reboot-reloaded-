@@ -54,6 +54,7 @@ bge.logic.scene_path = game_path+'scenes'
 bge.logic.models_path = game_path+'models'
 bge.logic.sounds_path = game_path+'sounds'
 bge.logic.filters_path = game_path+'filters'
+bge.logic.shaders_path = game_path+'shaders'
 
 import scenes
 import backup_manager
