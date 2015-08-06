@@ -114,14 +114,6 @@ class LightBaton(Item):
 				self.cycle['class'].init()
 				self.cycle['class'].enter(self.getOwnerObject(), self.cycle['class'].driversplace)
 				hologram.visible = False
-				
-				color = self.object['color']
-				if color in self.cyclecolors : 
-					#self.cycle['class'].armature.replaceMesh(self.cyclecolors[color])
-					for child in self.cycle['class'].armature.children:
-						if 'body' in child:
-							child.replaceMesh(self.cyclecolors[color])
-					#self.cycle['class'].armature.update()
 
 			thread = threading.Thread()
 			thread.run = t
@@ -144,7 +136,7 @@ def item_init():
 
 class LightCycle(Vehicle):
 	# vehicle caracteristics
-	max_speed = 100    # m/s
+	max_speed = 55    # m/s  (~ 200 km/h)
 	max_yaw = pi/4     # rad/m
 	max_accel = 20     # maximum acceleration m/s^2
 	
@@ -154,8 +146,8 @@ class LightCycle(Vehicle):
 	
 	animup = 10
 	
-	def enter(self, character, place):
-		Vehicle.enter(self, character, place)
+	def enter(self, character, place, netsync=True):
+		Vehicle.enter(self, character, place, netsync)
 		armature = self.driver['class'].skin.armature
 		# anim player to in vehicle position
 		anim = self.driver['class'].skin.animations['set cycle']
@@ -166,6 +158,22 @@ class LightCycle(Vehicle):
 		head = self.driver['class'].camera_head
 		self.oldheadpos = head.localPosition.copy()
 		head.worldPosition = self.headpos.worldPosition
+		mesh = self.body.meshes[0]
+		''' unfortunatly crashing on material.getShader()
+		for matid in range(mesh.numMaterials):
+			if mesh.getMaterialName(matid) == 'MAcycle body orange':
+				shader = mesh.materials[matid].getShader() # crashing on getShader
+				if shader != None :
+					vertfile = open(bge.logic.shaders_path+'/standard.vert', 'r')
+					fragfile = open(bge.logic.shaders_path+'/light-cycle.frag', 'r')
+					shader.delSource()
+					shader.setSource(vertfile.read(), fragfile.read())
+					vertfile.close()
+					fragfile.close()
+					shader.setSampler('emit', 4)
+					shader.setUniform3f('color', 1.0, 1.0, 1.0, 1.0)
+					shader.validate()
+		'''
 
 	def init(self):
 		Vehicle.init(self)
@@ -176,12 +184,15 @@ class LightCycle(Vehicle):
 				self.front = child
 			if "armature" in child:
 				self.armature = child
+		for child in self.armature.children:
+			if "body" in child:
+				self.body = child
 		self.timer = time.time()
 		
-	def exit(self, character):
+	def exit(self, character, netsync=True):
 		head = character['class'].camera_head
 		head.localPosition = self.oldheadpos
-		Vehicle.exit(self, character)
+		Vehicle.exit(self, character, netsync)
 
 	def updateControl(self, speed, yaw, breaks, netsync=True):
 		if speed > self.max_speed:    speed = self.max_speed
@@ -203,7 +214,6 @@ def cycle_update(cont):
 	object = cont.owner
 	cycle = object['class']
 	onfloor = cycle.floor.sensors[0].status
-	obstacle = cycle.front.sensors[0].status
 	
 	speed  = object['speed']
 	yaw    = object['yaw']
@@ -222,6 +232,10 @@ def cycle_update(cont):
 			acceleration = cycle.max_accel
 		propulsion = mass * acceleration
 		lateral_force = -mass * velocity.x / cycle.reach_stability
+		
+		if breaks and velocity.y > 0: 
+			yaw *= 2
+			propulsion = -mass * cycle.max_accel
 		
 		# tilt rotation
 		if yaw > 0.1:    inclin = -pi/5
