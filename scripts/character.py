@@ -20,6 +20,7 @@ This file is part of Tron-R.
 """
 
 import bge, mathutils
+from mathutils import *
 import special_characters, tools
 import client
 import backup_manager as bm
@@ -77,8 +78,34 @@ def add_skin(name, ref) :
 	c =  add_generic_skin(name, ref)
 	if c == False :
 		return add_special_skin(name, ref)
-	else : return c;
+	else : return c
 
+def update_frustum_visibility(cont):
+	if 'class' in cont.owner:
+		armature = cont.owner['class'].skin.armature
+	else: return
+	rot = cont.owner.worldOrientation
+	pos = cont.owner.worldPosition
+	box = []
+	box.append(rot * Vector(( 0.2,  0.2,  0.0)) + pos)
+	box.append(rot * Vector((-0.2,  0.2,  0.0)) + pos)
+	box.append(rot * Vector(( 0.2, -0.2,  0.0)) + pos)
+	box.append(rot * Vector((-0.2, -0.2,  0.0)) + pos)
+	box.append(rot * Vector(( 0.2,  0.2,  2.0)) + pos)
+	box.append(rot * Vector((-0.2,  0.2,  2.0)) + pos)
+	box.append(rot * Vector(( 0.2, -0.2,  2.0)) + pos)
+	box.append(rot * Vector((-0.2, -0.2,  2.0)) + pos)
+	cam = bge.logic.getCurrentScene().active_camera
+	if cam.boxInsideFrustum(box) == cam.INSIDE:
+		print('in')
+		for child in armature.children:
+			child.visible = True
+		armature.visible = True
+	else:
+		for child in armature.children:
+			child.visible = False
+		armature.visible = False
+		print('out')
 
 
 MOVE_ACTION = "move action"
@@ -789,11 +816,11 @@ class OfflineCharacter(object) :
 		diff = rotEuler.z - self.orient.z
 		if diff > HALFPI :
 			if self.isactive():	o = rotEuler.z - HALFPI
-			else:	rotEuler.z = HALFPI
+			else:	rotEuler.z = HALFPI + self.orient.z
 			t = HALFPI
 		elif diff < -HALFPI :
 			if self.isactive():	o = rotEuler.z + HALFPI
-			else:	rotEuler.z = -HALFPI
+			else:	rotEuler.z = -HALFPI + self.orient.z
 			t = -HALFPI
 		else :
 			t = diff
@@ -806,7 +833,7 @@ class OfflineCharacter(object) :
 	def takeWay(self, rz) :
 		if self.isactive() == False: return
 		self.orient.z = rz
-		self.box.worldOrientation = self.orient
+		self.box.localOrientation = self.orient
 
 
 	def vehicleCommand(self, speed, yaw, breaks):
