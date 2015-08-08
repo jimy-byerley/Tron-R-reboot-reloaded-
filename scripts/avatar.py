@@ -143,7 +143,6 @@ class Avatar(character.Character) :
 	
 	def toggle_menu(self, menu=None):
 		if menu==None: menu = not self.menu_active
-		self.menu_active = menu
 		if menu:
 			self.overlay.objects['menu'].visible = True
 			for child in self.overlay.objects['menu'].childrenRecursive:
@@ -157,6 +156,7 @@ class Avatar(character.Character) :
 			filters.disable_filter('pause menu')
 			bge.render.showMouse(False)
 			bge.render.setMousePosition(WIN_MIDDLE_X, WIN_MIDDLE_Y)
+		self.menu_active = menu
 
 
 
@@ -399,10 +399,10 @@ def mouse_input() :
 
 	if y > HALFPI:
 		y = HALFPI
-		my -= sens.position[1] - WIN_MIDDLE_Y
+		my = HALFPI/config.mouse.sensibility
 	elif y < -HALFPI:
 		y = -HALFPI
-		my -= sens.position[1] - WIN_MIDDLE_Y
+		my = -HALFPI/config.mouse.sensibility
 	if not first_player.isactive():
 		x += first_player.orient.z
 		if x > HALFPI:
