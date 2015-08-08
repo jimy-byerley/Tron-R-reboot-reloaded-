@@ -70,6 +70,7 @@ scenes = [
 	# coordinates (xyz)    file name             function to decide of loading    list of dependencies (other scenes)
 	((1000,0,0),       "small-arena-outside.blend",      on_distance(500),        ("system.blend",)),
 	((-7700,3000,140), "small-grid-outlands.blend",      on_distance(800),        ("system.blend",)),
+	((-7400,2830,140), "outlands-bridge-0.blend",        on_distance(800),        ("system.blend",)),
 	((0,0,0),          "town-part-00.blend",             on_distance(100),        ("system.blend",)),
 	((50,0,0),         "town-part-01.blend",             on_distance(100),        ("system.blend",)),
 	((80,-100,0),      "town-part-02.blend",             on_distance(100),        ("system.blend",)),
