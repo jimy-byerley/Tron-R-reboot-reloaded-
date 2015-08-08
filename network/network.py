@@ -222,30 +222,44 @@ class Server(socket.socket):
 								stop = True
 								original = dump['id']
 								idbytes = str(original).encode()
-								if idbytes in self.datas.keys() and idbytes in self.objects_created.keys() and self.objects_created[idbytes] < time.time()+10:
+								if idbytes in self.datas.keys():
+									different = False
 									orig_pos = dump['pos']
 									try: data_pos = self.datas.physics
 									except: pass
 									else:
-										# if the distance between the two objects is upper than 0.5 m
 										if len(orig_pos) == 3 and len(data_pos) == 3 :
-											if (orig_pos[0]-data_pos[0])**2 + (orig_pos[1]-data_pos[1])**2 + (orig_pos[2]-data_pos[2])**2 > 0.25:
-												# search for an higher ID
-												id = original
-												for key in self.datas.keys():
-													if key.isdigit() and int(key) >= id:
-														id = int(key) + 1
-												dump['id'] = id
-												# save object dump
-												data = obdata()
-												data.physics   = pickle.dumps((dump['pos'], dump['rot'], dump['velocity'], dump['angular']))
-												self.datas['id'] = data
-												# send to all client the information of a new object
-												reponse = b'newobject\0'+ dumptype +b'\0'+ pickle.dumps(dump)
-												for h in self.hosts:
-													if h and h != host: self.send(reponse, host)
-												# change ID on client if necessary
-												self.send(b'changeid\0'+ original +b'\0'+ id, host)
+											# if the distance between the two objects is upper than 0.5 m
+											dist_ok = (  (orig_pos[0]-data_pos[0])**2 
+											           + (orig_pos[1]-data_pos[1])**2 
+											           + (orig_pos[2]-data_pos[2])**2) > 0.25
+											# if the time between the two creations is lower than 3 update periods
+											time_ok = (    idbytes in self.objects_created.keys() 
+											           and self.objects_created[idbytes] < self.update_period*3)
+											different = not (dist_ok and time_ok)
+									
+									if different:
+										# search for an higher ID
+										id = original
+										for key in self.datas.keys():
+											if key.isdigit() and int(key) >= id:
+												id = int(key) + 1
+										dump['id'] = id
+										# save object dump
+										data = obdata()
+										data.physics   = pickle.dumps((dump['pos'], dump['rot'], dump['velocity'], dump['angular']))
+										self.datas['id'] = data
+										# send to all client the information of a new object
+										msg = b'newobject\0'+ dumptype +b'\0'+ pickle.dumps(dump)
+										# change ID on client if necessary
+										self.send(b'changeid\0'+ original +b'\0'+ id, host)
+										print('id changed from', original, 'to', id)
+									else:
+										msg = packet
+									
+									# send creation to all clients
+									for h in self.hosts:
+										if h and h != host: self.sendto(msg, h)
 											
 					
 					elif similar(packet, b'unsync\0') and zeros >= 2:
@@ -300,7 +314,7 @@ class Server(socket.socket):
 						# user should be created
 						if password == self.passwords[user]:
 							if host in self.hosts and len(self.users[host]) > 1 and not self.multiple_sessions:
-								debugmsg('an other session for host %s refused.' % host[0])
+								debugmsg('an other session for host %s were refused.' % host[0])
 								self.sendto(subject + b'multisession not allowed', host)
 							if self.num_client >= self.max_client:
 								debugmsg('new session for host %s refused: server is full.' % host[0])
