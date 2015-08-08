@@ -75,7 +75,7 @@ def start_game(blenderoptions='', gameoptions=''):
 	if 'window_height' in config : height = config['window_height']
 	if sys.platform in ('linux', 'linux2'):
 		f = open(bge.logic.expandPath('//../blenderplayer_path.txt'), 'r')
-		blenderplayer = f.read()[:-1] +'/blenderplayer'
+		blenderplayer = f.readlines()[0].rstrip('\n') +'/blenderplayer'
 		f.close()
 		command = '%s -w %d %d %s %s - %s -l %s -p %d' % (
 			blenderplayer,
@@ -90,7 +90,7 @@ def start_game(blenderoptions='', gameoptions=''):
 			
 	elif sys.platform in ('win', 'win32', 'win64'):
 		f = open(bge.logic.expandPath('//..\\blenderplayer_path.txt'), 'r')
-		blenderplayer = f.read()[:-1] +'\\blenderplayer'
+		blenderplayer = f.readlines()[0].rstrip('\n') +'\\blenderplayer'
 		f.close()
 		command = '%s -w %d %d %s %s - %s -l %s -p %d' % (
 			blenderplayer,
