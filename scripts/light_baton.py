@@ -27,6 +27,8 @@ from math import *
 import threading
 import aud
 
+anim_frame_time = 1/24.  # time of animation frame
+
 class LightBaton(Item):
 	cycle = None
 	activate_date = 0.
@@ -76,8 +78,7 @@ class LightBaton(Item):
 			self.cycle = None
 			holo.playAction("light baton prototype", 10, 0)
 			def t():
-				while holo.getActionFrame() >= 2:
-					time.sleep(0.05)
+				time.sleep(anim_frame_time*8)
 				holo.visible = False
 			thread = threading.Thread()
 			thread.run = t
@@ -100,13 +101,11 @@ class LightBaton(Item):
 			armature.playAction(anim[0], anim[1], anim[4], layer=1)
 			hologram = self.object.children[0]
 			def t():
-				while armature.getActionFrame(1) <= anim[3] :
-					time.sleep(0.05)
+				time.sleep(abs(anim[1]-anim[3])*anim_frame_time)
 				hologram.visible = True
 				hologram.playAction("light baton prototype", 0, 10)
 				dev.play(sound)
-				while hologram.getActionFrame(0) <= 8:
-					time.sleep(0.05)
+				time.sleep(anim_frame_time*8)
 				scene = bge.logic.getCurrentScene()
 				self.cycle = scene.addObject("light-cycle", self.getOwnerObject())
 				self.cycle.worldLinearVelocity = self.getOwnerObject().worldLinearVelocity

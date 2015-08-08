@@ -26,6 +26,7 @@ import client
 import backup_manager as bm
 import os, time, threading, pickle, math
 
+anim_frame_time = 1/24.0   # based on 24 animation frame per second
 
 
 def similar(s, pattern) :        
@@ -423,18 +424,12 @@ class Skin(object) :
 					if "itemname" in obj :
 						anim = self.animations["take "+obj["itemname"]]
 						self.armature.playAction(anim[0], anim[4], anim[1], layer=2, layer_weight=0.0)
+						
 						# il faut une boucle de controle parallele pour attacher l'item a la main au bon moment
 						def _attach() :
-							while True:
-								# cas ou l'animation se lit de gauche a droite
-								if anim[1] >= anim[4] and self.armature.getActionFrame(2) >= anim[2] :
-									self.attach(obj, i)
-									break
-								# cas ou l'animation se lit de droite à gauche
-								if anim[1] <= anim[4] and self.armature.getActionFrame(2) <= anim[2] :
-									self.attach(obj, i)
-									break
-							#print('end of _attach (1)')
+							# utilisation du temps ecoulé a la place du l'image en cours, pour eviter des problemes liés au frustum occlusion
+							time.sleep(abs(anim[4]-anim[3])*anim_frame_time)
+							self.attach(obj, i)
 							return
 						if wait :
 							_attach()
@@ -470,16 +465,8 @@ class Skin(object) :
 					self.armature.playAction(anim[0], anim[1], anim[4], layer=2, layer_weight=0.0)
 					# il faut une boucle de controle parallele pour attacher l'item a la main au bon moment
 					def _attach() :
-						while True:
-							# cas ou l'animation se lit de gauche a droite
-							if anim[4] >= anim[1] and self.armature.getActionFrame(2) >= anim[2] :
-								self.attach(obj, "hand")
-								break
-							# cas ou l'animation se lit de droite à gauche
-							elif anim[4] <= anim[1] and self.armature.getActionFrame(2) <= anim[2] :
-								self.attach(obj, "hand")
-								break
-						#print("end of __attach (2)")
+						time.sleep(abs(anim[1]-anim[2])*anim_frame_time)
+						self.attach(obj, "hand")
 						return
 					if wait :
 						_attach()

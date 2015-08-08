@@ -29,6 +29,8 @@ from item import *
 import threading
 import time
 
+anim_frame_time = 1/24.
+
 DISK_DAMAGE = 1  # fraction de vie qu'un joueur perd quand il recoit un coup de disque
 MAX_DISTANCE_LAUNCHER = 30     # distance a partir de laquelle un disque revient automatiquement a celui qui l'a lancé
 LAUNCHER_PROPERTY = "launcher" # Game Property du disque faisant reférence au lanceur du disque
@@ -155,8 +157,7 @@ class IDDisc(Item):
 		anim = skin.animations["launch disk"]
 		armature.playAction(anim[0], anim[1], anim[4], layer=2, layer_weight=0.0)
 		def detach():
-			while int(armature.getActionFrame(2)) < anim[2]:
-				time.sleep(0.05)
+			time.sleep(abs(anim[1]-anim[2])*anim_frame_time)
 			box["class"].skin.detach(self.object)
 			
 			wo = box["class"].camera_head.worldOrientation.to_euler()
