@@ -241,6 +241,7 @@ WIN_MIDDLE_Y = int(bge.render.getWindowHeight()/2)
 mx, my = (WIN_MIDDLE_X, WIN_MIDDLE_Y)
 bge.render.setMousePosition(WIN_MIDDLE_X, WIN_MIDDLE_Y)
 change = False
+menu_flag = True
 boxrotz = 0
 
 def keyboard_input() :
@@ -362,16 +363,19 @@ def mouse_input() :
 	Cette fonction est parametrée par les champs du fichier config.py dans le meme repertoire
 	Ce callback est appele par le spawn du premier joueur
 	"""
-	global mx, my, first_player, headcam, boxrotz
+	global mx, my, first_player, headcam, boxrotz, menu_flag
 	cont = bge.logic.getCurrentController()
 	own = cont.owner
 	sens = cont.sensors[0]
 
-	if first_player.menu_active:
-		# avoid view rotation when closing menu
-		mx -= sens.position[0] - WIN_MIDDLE_X
-		my -= sens.position[1] - WIN_MIDDLE_Y
+	if first_player.menu_active: 
+		menu_flag = True
 		return
+	# wait 1 logic step to avoid camera movement when closing menu
+	if menu_flag:
+		menu_flag = False
+		return
+	
 	if first_player.vehicle:
 		c = bge.logic.config['vehicle_free_view'] # float between 1.0 and 0.0, 1 means view is entirely free and is not depending from the vehicle orientation
 		vorient = first_player.vehicle.worldOrientation.to_euler()
