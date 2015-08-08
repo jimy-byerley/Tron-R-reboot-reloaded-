@@ -1,11 +1,11 @@
-import os, signal
+import os, signal, sys
 import bge
 import scenes
 
 owner = bge.logic.getCurrentController().owner
 
 # restart parent process
-if bge.logic.launcher_process != None and 'game_launcher_stop' in bge.logic.config and bge.logic.config['game_launcher_stop']:
+if sys.platform in ('linux', 'linux2') and bge.logic.launcher_process != None and 'game_launcher_stop' in bge.logic.config and bge.logic.config['game_launcher_stop']:
     os.kill(bge.logic.launcher_process, signal.SIGCONT)
 
 # stop client
