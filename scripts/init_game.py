@@ -92,7 +92,7 @@ bge.logic.config = config
 ## parent process (menu) stop, to optimize CPU consumption ##
 
 bge.logic.launcher_process = launcher_process
-if launcher_process != None and 'game_launcher_stop' in config and config['game_launcher_stop']:
+if sys.platform in ('linux', 'linux2') and launcher_process != None and 'game_launcher_stop' in config and config['game_launcher_stop']:
 	os.kill(launcher_process, signal.SIGTSTP)
 
 ### thread usage ###
