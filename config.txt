@@ -14,3 +14,4 @@ network_user          "Kevin Flynn"
 network_password      "machin"
 game_launcher_stop    True
 game_menu_stop        False
+vehicle_free_view     0.0
