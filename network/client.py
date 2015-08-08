@@ -255,7 +255,7 @@ class Client(socket.socket):
 						 idorigin, idtarget = int(idorigin), int(idtarget)
 						 obj = get_object_by_id(self.scene, idorigin)
 						 if obj: obj['uniqid'] = idtarget
-						 if obj: print(packet)
+						 print(packet, obj)
 				
 				# packet of kind:    newobject.dumptype.dump
 				elif similar(packet, b'newobject\0') and zeros >= 2:
@@ -268,7 +268,10 @@ class Client(socket.socket):
 						if 'id' in dump and dumptype in (bm.marker_character, bm.marker_item, bm.marker_vehicle, bm.marker_object) :
 							print(packet)
 							bm.last_backup[dumptype] = dump
-							bm.unloaded.append(dump['id'])
+							object = bm.get_object_by_id(self.scene, dump['id'])
+							if object:
+								if dump['id'] not in bm.loaded:   bm.loaded.append(dump['id'])
+							elif   dump['id'] not in bm.unloaded: bm.unloaded.append(dump['id'])
 							if dump['id'] == bm.max_id:  bm.max_id += 1
 				
 				elif similar(packet, b'unsync\0') and zeros >= 2:
@@ -369,6 +372,7 @@ class Client(socket.socket):
 	
 	def created_object(self, obj):
 		dump = bm.dump_this(obj)
+		print('new object', dump)
 		if dump:
 			packet = b'newobject\0'+obj[bm.marker_property]+b'\0'+pickle.dumps(dump)
 			self.send(packet)
