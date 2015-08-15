@@ -625,10 +625,10 @@ class OfflineCharacter(object) :
 			
 		# index cameras, ...
 		for child in self.camera_head.children :
-			if "camera TPS" in child and child["camera TPS"] :
-				self.camera_back = child
-			elif "camera FPS" in child and child["camera FPS"] :
-				self.camera_fps = child
+			if "camera TPV" in child and child["camera TPV"] :
+				self.camera_tpv = child
+			elif "camera FPV" in child and child["camera FPV"] :
+				self.camera_fpv = child
 			# item sensor
 			elif "item sensor" in child and child["item sensor"] :
 				self.item_sensor = child
@@ -728,8 +728,9 @@ class OfflineCharacter(object) :
 	def setCameraActive(self, camera) :
 		scene = bge.logic.getCurrentScene()
 		
-		if camera == "back" :
-			scene.active_camera = self.camera_back
+		if camera == "tpv" :
+			scene.active_camera = self.camera_tpv
+			self.update_TPV_distance(bge.logic.config['game_tpv_distance'])
 			if self.skin.helmet_active and self.body_helmet:
 				self.body_helmet.visible = True
 				if self.body_head : self.body_head.visible = False
@@ -738,11 +739,16 @@ class OfflineCharacter(object) :
 				if self.body_head : self.body_head.visible = True
 				if self.body_hair : self.body_hair.visible = True
 		
-		elif camera == "fps" :
-			scene.active_camera = self.camera_fps
+		elif camera == "fpv" :
+			scene.active_camera = self.camera_fpv
 			if self.body_head :   self.body_head.visible = False
 			if self.body_hair :   self.body_hair.visible = False
 			if self.body_helmet : self.body_helmet.visible = False
+	
+	def update_TPV_distance(self, distance):
+		c = self.camera_tpv.worldPosition
+		h = self.camera_head.worldPosition
+		self.camera_tpv.worldPosition = (c-h).normalized() * distance + h
 
 	
 	def availableItem(self) :
