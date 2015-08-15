@@ -157,6 +157,7 @@ class Avatar(character.Character) :
 			bge.render.showMouse(False)
 			bge.render.setMousePosition(WIN_MIDDLE_X, WIN_MIDDLE_Y)
 		self.menu_active = menu
+	
 
 
 
@@ -174,7 +175,7 @@ def init(cont) :
 	
 	first_player = Avatar(owner["character_name"], owner["skin"])
 	first_player.spawn(owner)
-	first_player.setCameraActive("fps")
+	first_player.setCameraActive(game_config['game_default_camera'])
 	# this object was not existing in the game backup, so signal its creation
 	# this function can serve when a new player register, and have no skin
 	if bge.logic.client:
@@ -193,7 +194,7 @@ def init_noauto(game_config, player_dump) :
 	scene = bge.logic.getCurrentScene()
 	first_player = Avatar(game_config['nickname'], game_config["skin"])
 	first_player.spawn(scene.active_camera, existing=fp_obj)
-	first_player.setCameraActive("fps")
+	first_player.setCameraActive(game_config['game_default_camera'])
 
 def post_init():
 	first_player.updateItemOverlay()	
@@ -267,9 +268,9 @@ def keyboard_input() :
 	## camera control ##
 
 	if _touch(sens, config.keys.toggle_fps) :
-		first_player.setCameraActive("fps")
+		first_player.setCameraActive("fpv")
 	elif _touch(sens, config.keys.toggle_tps) :
-		first_player.setCameraActive("back")
+		first_player.setCameraActive("tpv")
 
 	## misc control ##
 
