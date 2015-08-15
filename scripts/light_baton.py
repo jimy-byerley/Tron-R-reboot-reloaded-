@@ -31,7 +31,8 @@ anim_frame_time = 1/24.  # time of animation frame
 
 class LightBaton(Item):
 	cycle = None
-	activate_date = 0.
+	next_action1 = 0.
+	next_action2 = 0.
 	
 	colors = { # meshes for color
 		'blue' : 'light baton blue',
@@ -57,10 +58,11 @@ class LightBaton(Item):
 	def taken(self):
 		Item.taken(self)
 		self.changeColor(self.getOwner().getColor())
-		self.activate_date = time.time()
+		self.next_action1 = self.next_action2 = time.time()
 	
 	def action1(self):
-		if self.activate_date+0.5 > time.time() : return
+		if self.next_action1 > time.time(): return
+		else: self.next_action1 = time.time() + 0.5
 		if self.cycle :
 			# play sound
 			path = bge.logic.sounds_path+'/light-vehicles/cycle-stop.wav'
@@ -117,11 +119,13 @@ class LightBaton(Item):
 			thread = threading.Thread()
 			thread.run = t
 			thread.start()
-		self.activate_date = time.time()
 	
 	def action2(self):
+		if self.next_action2 > time.time(): return
+		else: self.next_action2 = time.time()+0.5
 		if self.cycle: 
-			print(self.cycle['uniqid'])
+			if 'uniqid' in self.cycle: print(self.cycle['uniqid'])
+			self.cycle['class'].set_trail(not self.cycle['class'].trail)
 
 
 def item_init():
@@ -131,6 +135,100 @@ def item_init():
 	owner['class'] = LightBaton(owner, owner["itemname"], owner["hand"], owner["attach"])
 	owner['class'].init()
 
+
+
+## TRAIL AND VEHICLE SECTION ##
+
+trail_precision = 1.0 # (meters)
+
+
+def putshaderuniform(shader, p, i):
+	shader.setUniform3f('p'+str(i), p[i][0], p[i][1], p[i][2])
+
+def update_trail(cont):
+	owner = cont.owner
+	marker = owner['marker']
+	path = owner['path']
+	trail_len = int(owner['len']/trail_precision)
+	
+	p = marker.worldPosition - path[1]
+	dist = sqrt(p.x**2 + p.y**2 + p.z**2)
+	if dist > trail_precision :
+		path.pop(-1)
+		path[0] = marker.worldPosition.copy()
+		path.insert(0, marker.worldPosition) # position as a pointer
+		for i in range(trail_len):
+			putshaderuniform(owner['shader'], path, i)
+	else:
+		putshaderuniform(owner['shader'], path, 0)
+
+
+def add_trail(marker, length=100):
+	trail = bge.logic.getCurrentScene().addObject("light trail")
+	mesh = trail.meshes[0]
+	mat = mesh.materials[0]
+	trail_len = int(length/trail_precision)
+	
+	trail['len'] = length
+	trail['marker'] = marker
+	trail['path'] = [trail.position] * trail_len
+			
+	if not 'shader' in trail:
+		shader = trail['shader'] = mat.getShader()
+	if not shader.isValid():
+		# declaration on positions
+		uniforms = 'p0, p1'
+		for i in range(2, trail_len):
+			uniforms += ', p'+str(i)
+		# selection of position to use
+		selecter = '\tif (I >= -%f) pos = p0;\n' % (1/float(trail_len),)
+		for i in range(trail_len):
+			selecter += '\tif (I >= -%f && I < -%f)  pos = p%d;\n' % ((i+1)/float(trail_len), i/float(trail_len), i)
+		# setting shader
+		vertex = trail_vertex % (uniforms, selecter)
+		shader.setSource(vertex, trail_fragment, 1)
+		shader.setSampler("tex_emit", 0)
+		shader.setUniform1f('len', trail_len)
+		
+		for i in range(trail_len):
+			putshaderuniform(shader, trail['path'], i)
+	
+	return trail
+	    
+	
+trail_vertex = """
+uniform vec3 %s;
+varying vec2 Texcoord;
+varying float dist;
+
+void main(){
+	float I = gl_Vertex.y;
+	vec3 pos = gl_Vertex.xyz;
+%s
+	gl_Position = gl_ModelViewProjectionMatrix * vec4(pos.x+gl_Vertex.x, pos.y, pos.z+gl_Vertex.z, gl_Vertex.a);
+	Texcoord = gl_MultiTexCoord0.xy;
+
+	dist = length(p0-p1);
+}
+
+"""
+
+trail_fragment = """
+
+
+uniform sampler2D tex_emit;
+varying vec2 Texcoord;
+varying float dist;
+uniform float len;
+
+void main()
+{
+	vec4 trail_tex = texture2D(tex_emit, vec2(Texcoord.x+dist,Texcoord.y)).rgba;
+	vec3 color = trail_tex.rgb * vec3(0.4, 0.8, 1) * 2;
+	float alpha = float(Texcoord.x) - dist/len;
+	gl_FragColor = vec4(color*alpha, alpha);
+}
+"""
 
 
 class LightCycle(Vehicle):
@@ -144,6 +242,7 @@ class LightCycle(Vehicle):
 	reach_tilt = 0.6
 	
 	animup = 10
+	trail = None
 	
 	def enter(self, character, place, netsync=True):
 		Vehicle.enter(self, character, place, netsync)
@@ -158,9 +257,9 @@ class LightCycle(Vehicle):
 		self.oldheadpos = head.localPosition.copy()
 		head.worldPosition = self.headpos.worldPosition
 		mesh = self.body.meshes[0]
-		''' unfortunatly crashing on material.getShader()
+		'''# unfortunatly crashing on material.getShader()
 		for matid in range(mesh.numMaterials):
-			if mesh.getMaterialName(matid) == 'MAcycle body orange':
+			if mesh.getMaterialName(matid) == 'MAcycle body white':
 				shader = mesh.materials[matid].getShader() # crashing on getShader
 				if shader != None :
 					vertfile = open(bge.logic.shaders_path+'/standard.vert', 'r')
@@ -177,12 +276,10 @@ class LightCycle(Vehicle):
 	def init(self):
 		Vehicle.init(self)
 		for child in self.object.children:
-			if "floor sensor" in child:
-				self.floor = child
-			if "front sensor" in child:
-				self.front = child
-			if "armature" in child:
-				self.armature = child
+			if "floor sensor" in child:  self.floor = child
+			if "front sensor" in child:  self.front = child
+			if "armature" in child:      self.armature = child
+			if "trail marker" in child:  self.trail_marker = child
 		for child in self.armature.children:
 			if "body" in child:
 				self.body = child
@@ -191,6 +288,7 @@ class LightCycle(Vehicle):
 	def exit(self, character, netsync=True):
 		head = character['class'].camera_head
 		head.localPosition = self.oldheadpos
+		self.driver['class'].update_TPV_distance(bge.logic.config['game_tpv_distance'])
 		Vehicle.exit(self, character, netsync)
 
 	def updateControl(self, speed, yaw, breaks, netsync=True):
@@ -202,6 +300,19 @@ class LightCycle(Vehicle):
 		self.object['yaw']    = yaw
 		self.object['breaks'] = breaks
 		Vehicle.updateControl(self, speed, yaw, breaks, netsync)
+	
+	def set_trail(self, active=True):
+		if self.trail and not active:
+			self.trail.endObject()
+			self.trail = None
+			bge.logic.getCurrentScene().active_camera.frustum_culling = True
+		elif not self.trail and active:
+			self.trail = add_trail(self.trail_marker)
+			bge.logic.getCurrentScene().active_camera.frustum_culling = False
+	
+	def remove(self, netsync=False):
+		self.set_trail(False)
+		Vehicle.remove(self, netsync)
 
 
 def cycle_init(cont):
@@ -222,6 +333,9 @@ def cycle_update(cont):
 	orientation = object.localOrientation.to_euler()
 	angular = object.localAngularVelocity
 	mass = object.mass
+	
+	if cycle.driver:
+		cycle.driver['class'].update_TPV_distance(bge.logic.config['game_tpv_distance']+velocity.magnitude/4)
 	
 	if onfloor in (KX_INPUT_JUST_ACTIVATED, KX_INPUT_ACTIVE):
 		# acceleration
