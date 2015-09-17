@@ -75,8 +75,8 @@ def load_meshlib(rule, params):
 	if libname not in bge.logic.LibList():
 		print("module \"%s\": load item mesh library: %s ..." % (__name__, repr(libname)))
 		bge.logic.LibLoad(libname, "Mesh", load_actions=True, load_scripts=True, async=load_async)
-		if load_async: time.sleep(2)
-		time.sleep(0.5)
+		#if load_async: time.sleep(2)
+		#time.sleep(0.5)
 	return True
 	
 

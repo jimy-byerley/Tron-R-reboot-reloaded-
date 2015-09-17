@@ -49,17 +49,9 @@ int i,j;
 void main() {
 
     vec2 coord = gl_TexCoord[1].xy/gl_TexCoord[1].w*0.5+0.5;
-    //coord = clamp(coord,0.005,0.995);
 
-    //vec3 normal = 0; texture2D(normals, gl_TexCoord[0].st*texscale).rgb*2.0-1.0;
-    //normal.x = -normal.x;
-    //normal.y = -normal.y;
-
-    //vec3 nVec = TangentSpace(vec3(normal*bump));
-    //vec3 vVec = normalize(gl_TexCoord[2].xyz);
-
-    float cosine = 1.0; //abs(dot(-vVec,nVec));
-    float fresnel = 0.98; //0.9+0.2*pow(1.0-cosine+0.2,2.0);
+    float cosine = 1.0; 
+    float fresnel = 0.98; 
 
 	vec4 glow = vec4(0);
 	for (i=-2; i<2; i++)
@@ -74,11 +66,6 @@ void main() {
 
     vec3 luminosity = vec3(0.30, 0.59, 0.11);
 	float reflectivity = pow(dot(luminosity, reflect.rgb),5.0);
-
-    //vec3 refract = vec3(0.0);
-    //refract.r = texture2D(refraction, (coord+nVec.st)*1.0).r;
-    //refract.g = texture2D(refraction, (coord+nVec.st)*1.0-(vVec.st*aberration)).g;
-    //refract.b = texture2D(refraction, (coord+nVec.st)*1.0-(vVec.st*aberration*2.0)).b;
 
     vec4 diffuse = texture2D(diffuse, gl_TexCoord[0].st*texscale).rgba;
     vec3 color = mix(diffuse.rgb*vec3(1.0,4.0,7.0), reflect, clamp(fresnel+reflectivity,0.7,0.98));

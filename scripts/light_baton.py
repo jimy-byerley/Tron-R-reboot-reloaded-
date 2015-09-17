@@ -173,9 +173,10 @@ def add_trail(marker, length=100):
 	trail['marker'] = marker
 	trail['path'] = [trail.position] * trail_len
 			
-	if not 'shader' in trail:
+	if 'shader' not in trail:
 		shader = trail['shader'] = mat.getShader()
 	if not shader.isValid():
+		shader = trail['shader']
 		# declaration on positions
 		uniforms = 'p0, p1'
 		for i in range(2, trail_len):
@@ -257,10 +258,12 @@ class LightCycle(Vehicle):
 		self.oldheadpos = head.localPosition.copy()
 		head.worldPosition = self.headpos.worldPosition
 		mesh = self.body.meshes[0]
-		'''# unfortunatly crashing on material.getShader()
+		# unfortunatly crashing on material.getShader()
+		'''
 		for matid in range(mesh.numMaterials):
 			if mesh.getMaterialName(matid) == 'MAcycle body white':
-				shader = mesh.materials[matid].getShader() # crashing on getShader
+				mat = mesh.materials[matid]
+				shader = mat.getShader() # crashing on getShader
 				if shader != None :
 					vertfile = open(bge.logic.shaders_path+'/standard.vert', 'r')
 					fragfile = open(bge.logic.shaders_path+'/light-cycle.frag', 'r')
@@ -269,7 +272,7 @@ class LightCycle(Vehicle):
 					vertfile.close()
 					fragfile.close()
 					shader.setSampler('emit', 4)
-					shader.setUniform3f('color', 1.0, 1.0, 1.0, 1.0)
+					shader.setUniform3f('color', 1.0, 1.0, 1.0)
 					shader.validate()
 		'''
 

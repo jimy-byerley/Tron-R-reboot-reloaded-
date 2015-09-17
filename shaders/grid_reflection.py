@@ -11,7 +11,8 @@ objlist = scene.objects
 
 reflsize = 512 #reflection tex dimensions
 refrsize = 512 #refraction tex dimensions
-offset = 0.2 #geometry clipping offset, for hide the geometry under the grid
+offset = 0.15 #geometry clipping offset, for hide the geometry under the grid
+normal = Vector((0.0, 0.0, 1.0))
 
 #texture background color
 bgR = 0.02
@@ -42,7 +43,7 @@ own.visible = False
 
 # initializing camera for reflection pass
 pos = (viewer.position - own.position)*m1
-pos = own.position + pos*r180*unmir*m2
+pos = own.position + pos*r180*unmir*m2 + normal*offset
 ori = Matrix(viewer.orientation)
 ori.transpose()
 ori = ori*m1*r180*unmir*m2
@@ -70,18 +71,20 @@ own['oldpos'] = pos
 bgl.glCullFace(bgl.GL_FRONT)
 
 #plane equation
-#normal = own.getAxisVect((0.0, 0.0, 1.0)) # get Z axis vector of the plane in world coordinates
+normal = own.getAxisVect((0.0, 0.0, 1.0)) # get Z axis vector of the plane in world coordinates
 #normal = Vector((0.0, 0.0, 1.0)) * own.worldOrientation
+#normal = own.getAxisVect((0.0, 0.0, 1.0)) * watercamera.localTransform
 
-#D = -own.position.project(normal).magnitude #closest distance from center to plane
-#V = (activecam.position-own.position).normalized().dot(normal) #VdotN to get frontface/backface
+D = (activecam.position-own.position).project(own.getAxisVect((0.0, 0.0, 1.0))).magnitude #closest distance from center to plane
+V = (activecam.position-own.position).normalized().dot(normal) #VdotN to get frontface/backface
 
 #invert normals when backface
-#if V<0:
-#	normal = -normal
+if V<0:
+	normal = -normal
 
 
 # making a clipping plane buffer
+#print(D, normal, own.position)
 #plane = bgl.Buffer(bgl.GL_DOUBLE, [4], [-normal[0], -normal[1], -normal[2], -D+offset])
 #bgl.glClipPlane(bgl.GL_CLIP_PLANE0, plane)
 #bgl.glEnable(bgl.GL_CLIP_PLANE0)
